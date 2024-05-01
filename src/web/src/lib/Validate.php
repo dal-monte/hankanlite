@@ -86,10 +86,12 @@ class Validate
         }
 
         if (isset($checkPrice)) {
-            if (!strlen($checkPrice) || $checkPrice === 0) {
+            if (!strlen($checkPrice)) {
                 $errors['price'] = $priceType . 'を入力してください';
             } elseif (!filter_var($checkPrice, FILTER_VALIDATE_INT)) {
                 $errors['price'] = $priceType . 'は半角数字のみで入力して下さい';
+            } elseif ($checkPrice === 0) {
+                $errors['price'] = $priceType . 'を入力してください';
             } elseif (mb_strlen($checkPrice) > 13) {
                 $errors['price'] = $priceType . 'は1京円以上は非対応です';
             } elseif ($checkPrice < 0) {

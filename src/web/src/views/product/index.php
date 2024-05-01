@@ -49,7 +49,7 @@ $link = '
                             <label for="category_name" class="col-form-label mt-3">カテゴリー名</label>
                             <div class="col-auto">
                                 <select class="form-select" aria-label="Default select example" name="category_name" id="category_name">
-                                    <option <?php if (isset($increaseProduct['category_name'])) : echo 'value=' . escape($category['category_id']) . '@' .  escape($increaseProduct['category_name']); ?> selected>
+                                    <option <?php if (isset($increaseProduct['category_name'])) : echo 'value=' . escape($increaseProduct['category_id']) . '@' .  escape($increaseProduct['category_name']); ?> selected>
                                     <?php echo escape($increaseProduct['category_name']);
                                             else : echo 'selected>' . 'カテゴリー名を選択して下さい';
                                             endif; ?></option>
