@@ -17,7 +17,7 @@ $mysqli->query('DROP TABLE IF EXISTS products');
 $createTableSql = <<<EOT
 CREATE TABLE IF NOT EXISTS products (
     product_id INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL UNIQUE KEY,
+    product_name VARCHAR(100) NOT NULL UNIQUE KEY,
     list_price INT NOT NULL,
     category_id INT NOT NULL,
     index(category_id),

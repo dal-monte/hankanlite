@@ -69,51 +69,74 @@ class Controller
         return $view->render($path, $variables, $layout);
     }
 
-    protected function createToken()
+    protected function securityCheck($navElement, $fromNavbar = null)
     {
         $token = $this->token->token();
-        $_SESSION['token'] = $token;
-        return $token;
-    }
+        $navbar = $this->navbar;
+        $role = "not";
 
-    protected function judgeToken()
-    {
-        $tokenBool = false;
+        if (isset($fromNavbar) && $fromNavbar === "navbar") {
+            $_SESSION['token'] = null;
+            $token = $this->csrfToken();
 
-        if (isset($_POST['token']) && isset($_SESSION['token'])) {
-            $beforeToken = $_SESSION['token'];
-            $afterToken = $_POST['token'];
-            $tokenBool = $this->token->token($beforeToken, $afterToken);
-        } else {
-            throw new HttpNotFoundException();
-        }
-
-        if ($tokenBool = true) {
-            return $afterToken;
-        } elseif ($tokenBool = false) {
-            throw new HttpNotFoundException();
-        }
-    }
-
-    protected function tableRender($actionName, $controllerName, $contract, $userId, $postData = null)
-    {
-        $errors[] = [];
-
-        $sqlCategories = $this->databaseManager->get('Category');
-        $listCategories = $sqlCategories->fetchAllCategory();
-
-        $sqlProducts = $this->databaseManager->get('Product');
-        $listProducts = $sqlProducts->fetchAllProduct();
-
-        $sqlStock = $this->databaseManager->get('Stock');
-
-        $usedCategories = array_column($listProducts, 'category_id');
-        foreach ($listCategories as $listCategory) {
-            if (in_array($listCategory['category_id'], $usedCategories, true)) {
-                $listUsedCategories[] = $listCategory;
+            if (isset($_SESSION["role"])) {
+                $role = $_SESSION["role"];
             }
-        }
+            if (!in_array($navElement, $navbar[$role])) {
+                throw new HttpNotFoundException();
+            }
 
+            return [
+                'token' => $token,
+                'navbar' => $navbar[$role],
+            ];
+        } else {
+            if (!$this->request->isPost()) {
+                throw new HttpNotFoundException();
+            }
+            $token = $this->csrfToken();
+
+            if (isset($_SESSION["role"])) {
+                $role = $_SESSION["role"];
+            }
+            if (!in_array($navElement, $navbar[$role])) {
+                throw new HttpNotFoundException();
+            }
+
+            return $token;
+        }
+    }
+
+    protected function csrfToken()
+    {
+        if (isset($_SESSION['token'])) {
+            $tokenBool = false;
+
+            if (isset($_POST['token'])) {
+                $beforeToken = $_SESSION['token'];
+                $afterToken = $_POST['token'];
+                $tokenBool = $this->token->token($beforeToken, $afterToken);
+            } else {
+                throw new HttpNotFoundException();
+            }
+
+            if ($tokenBool) {
+                $newToken = $this->token->token();
+                $_SESSION['token'] = $newToken;
+
+                return $newToken;
+            } elseif (!$tokenBool) {
+                throw new HttpNotFoundException();
+            }
+        } else {
+            $token = $this->token->token();
+            $_SESSION['token'] = $token;
+            return $token;
+        }
+    }
+
+    private function judgeContractType($contract, $userId)
+    {
         if ($contract['contract_type'] === 'purchase') {
             $contract['purchase_contract_id'] = $contract['contract_id'];
             $sqlPurchaseProducts = $this->databaseManager->get('PurchaseProduct');
@@ -123,9 +146,11 @@ class Controller
             }
             $this->convert->convertJson($listPurchaseProducts, 'purchaseProduct', $userId);
             $listSelectedProducts = $listPurchaseProducts;
-        }
-
-        if ($contract['contract_type'] === 'sales') {
+            return [
+                'contract' => $contract,
+                'listSelectedProducts' => $listSelectedProducts,
+            ];
+        } elseif ($contract['contract_type'] === 'sales') {
             $contract['sales_contract_id'] = $contract['contract_id'];
             $sqlSalesProducts = $this->databaseManager->get('SalesProduct');
             $listSalesProducts = $sqlSalesProducts->fetchSalesProduct($contract);
@@ -141,280 +166,61 @@ class Controller
                     $negativeQuantities[] = $listSelectedProduct['product_name'];
                 }
             }
+            return [
+                'contract' => $contract,
+                'listSelectedProducts' => $listSelectedProducts,
+                'negativeQuantities' => $negativeQuantities,
+            ];
+        } else {
+            throw new HttpNotFoundException();
         }
+    }
+
+    protected function tableRender($actionName, $controllerName, $contract, $userId, $token, $postData = null)
+    {
+        $errors[] = [];
+
+        $token;
+
+        $sqlCategories = $this->databaseManager->get('Category');
+        $listCategories = $sqlCategories->fetchAllCategory();
+
+        $sqlProducts = $this->databaseManager->get('Product');
+        $listProducts = $sqlProducts->fetchAllProduct();
+
+        $usedCategories = array_column($listProducts, 'category_id');
+        foreach ($listCategories as $listCategory) {
+            if (in_array($listCategory['category_id'], $usedCategories, true)) {
+                $listUsedCategories[] = $listCategory;
+            }
+        }
+
+        $judgeContractType = $this->judgeContractType($contract, $userId);
+        extract($judgeContractType);
 
         // テーブルの入力欄の表示非表示コントロール
         if (isset($postData['tableEditingSelect'])) {
-            $errors['editingTable'] = [];
-
-            $checkExistProduct = isset($postData['product_name']);
-            $checkCorrectnessProduct = strpos($postData['product_name'], '@');
-
-            if ($checkExistProduct && $checkCorrectnessProduct) {
-                $product['product_id'] = strstr($postData['product_name'], '@', true);
-                $product['product_name'] = substr(strstr($postData['product_name'], '@', false), 1);
-                $errors['editingTable'] = $errors['editingTable'] + $this->validate->productValidate($product, $listProducts, 'select');
-                $errors['editingTable'] = $errors['editingTable'] + $this->validate->contractProductValidate($product, $listSelectedProducts, 'editing');
-                foreach ($listSelectedProducts as $listSelectedProduct) {
-                    if ((int)$product['product_id'] === $listSelectedProduct['product_id']) {
-                        $editingProduct = $listSelectedProduct;
-                    }
-                }
-            } else {
-                $errors['editingTable']['product_name'] = '商品を選択肢から選んでください';
-            }
-
-            if (!count($errors['editingTable'])) {
-                $tableOutput['product'] = $editingProduct;
-                $selectEditingFieldset = 'disabled';
-                $editingFieldset = 'able';
-                $selector = 'disabled';
-                $editing = 'show';
-            } else {
-                $editing = 'show';
-            }
+            $tableEditingSelect = $this->tableEditingSelect($postData, $listProducts, $listSelectedProducts);
+            extract($tableEditingSelect);
         } elseif (isset($postData['tableEditingDelete'])) {
-
-            $errors['editingTable'] = [];
-
-            $checkExistProduct = isset($postData['product_name']);
-            $checkCorrectnessProduct = strpos($postData['product_name'], '@');
-
-            if ($checkExistProduct && $checkCorrectnessProduct) {
-                $product['product_id'] = strstr($postData['product_name'], '@', true);
-                $product['product_name'] = substr(strstr($postData['product_name'], '@', false), 1);
-                $errors['editingTable'] = $errors['editingTable'] + $this->validate->productValidate($product, $listProducts, 'select');
-                $errors['editingTable'] = $errors['editingTable'] + $this->validate->contractProductValidate($product, $listSelectedProducts, 'editing');
-            } else {
-                $errors['editingTable']['product_name'] = '商品を選択肢から選んでください';
-            }
-
-            if (!count($errors['editingTable'])) {
-
-                foreach ($listSelectedProducts as $listSelectedProduct) {
-                    if ((int)$product['product_id'] === $listSelectedProduct['product_id']) {
-                        $editingProduct = $listSelectedProduct;
-                    }
-                }
-
-                $sqlPurchaseProducts->delete($editingProduct);
-                if ($contract['contract_type'] === 'purchase') {
-                    $sqlStock->decrease($editingProduct);
-                    $listSelectedProducts = $sqlPurchaseProducts->fetchPurchaseProduct($contract);
-                    $this->convert->convertJson($listSelectedProducts, 'purchaseProduct', $userId);
-                } elseif ($contract['contract_type'] === 'sales') {
-                    $sqlStock->increase($editingProduct);
-                    $listSelectedProducts = $sqlSalesProducts->fetchSalesProduct($contract);
-                    $this->convert->convertJson($listSelectedProducts, 'salesProduct', $userId);
-                }
-                $editingProduct = [];
-                $tableOutput['product'] = [];
-            } else {
-                $editing = 'show';
-            }
-        } elseif (isset($postData['tableEditing'])) {
-
-            $errors['editingTable'] = [];
-
-            if (isset($contract['product']['product_id'])) {
-                $editingProduct = $contract['product'];
-            } else {
-                throw new HttpNotFoundException();
-            }
-            $checkExistProductPrice = isset($postData['editing_price']);
-            $checkExistProductNumber = isset($postData['number']);
-
-            if ($checkExistProductPrice && $checkExistProductNumber) {
-                $editingProduct = [
-                    'product_id' => $contract['product']['product_id'],
-                    'product_name' => $contract['product']['product_name'],
-                    'price' => trim(str_replace(',', '', $postData['editing_price'])),
-                    'number' => trim($postData['number']),
-                    'list_price' => $contract['product']['list_price'],
-                    'category_name' => $contract['product']['category_name'],
-                    'category_id' => $contract['product']['category_id'],
-                    'quantity' => $contract['product']['quantity'],
-                ];
-                if ($contract['contract_type'] === 'purchase') {
-                    $editingProduct['purchase_contract_id'] = $contract['purchase_contract_id'];
-                } elseif ($contract['contract_type'] === 'sales') {
-                    $editingProduct['sales_contract_id'] = $contract['sales_contract_id'];
-                }
-                $errors['editingTable'] = $errors['editingTable'] + $this->validate->productValidate($editingProduct);
-            } else {
-                throw new HttpNotFoundException();
-            }
-
-            if (!count($errors['editingTable'])) {
-
-                foreach ($listSelectedProducts as $listSelectedProduct) {
-                    if ($listSelectedProduct['product_id'] === $editingProduct['product_id']) {
-                        $selectedProduct = $listSelectedProduct;
-                    }
-                }
-
-                $updateStock['number'] = $editingProduct['number'] - $selectedProduct['number'];
-
-                if ($contract['contract_type'] === 'purchase') {
-                    $sqlPurchaseProducts->update($editingProduct);
-                    $updateStock['product_id'] = $editingProduct['product_id'];
-                    $sqlStock->increase($updateStock);
-                    $listSelectedProducts = $sqlPurchaseProducts->fetchPurchaseProduct($contract);
-                    $this->convert->convertJson($listSelectedProducts, 'purchaseProduct', $userId);
-                } elseif ($contract['contract_type'] === 'sales') {
-                    $sqlSalesProducts->update($editingProduct);
-                    $updateStock['product_id'] = $editingProduct['product_id'];
-                    $sqlStock->decrease($updateStock);
-                    $listSelectedProducts = $sqlSalesProducts->fetchSalesProduct($contract);
-                    $this->convert->convertJson($listSelectedProducts, 'salesProduct', $userId);
-                }
-                $editingProduct = [];
-                $tableOutput['product'] = [];
-            } else {
-                $selectEditingFieldset = 'disabled';
-                $editingFieldset = 'able';
-                $selector = 'disabled';
-                $editing = 'show';
-            }
+            $tableEditingDelete = $this->tableEditingDelete($postData, $listProducts, $listSelectedProducts, $contract);
+            extract($tableEditingDelete);
+        } elseif (isset($postData['tableEditingUpdate'])) {
+            $tableEditingUpdate = $this->tableEditingUpdate($postData, $contract, $listSelectedProducts);
+            extract($tableEditingUpdate);
         } elseif (isset($postData['tableIncreaseSearch'])) {
-            $errors['increaseTable'] = [];
-
-            $checkExistCategory = isset($postData['category_name']);
-            $checkCorrectnessCategory = strpos($postData['category_name'], '@');
-
-            if ($checkExistCategory && $checkCorrectnessCategory) {
-                $category['category_name'] = $postData['category_name'];
-                $category['category_id'] = strstr($category['category_name'], '@', true);
-                $category['category_name'] = substr(strstr($category['category_name'], '@', false), 1);
-                $errors['increaseTable'] = $this->validate->categoryValidate($category, $listCategories, 'select', $listProducts);
-            } else {
-                $errors['increaseTable']['category_name'] = 'カテゴリーを選択肢から選んでください';
-            }
-
-            if (!count($errors['increaseTable'])) {
-                $tableOutput['product'] = $category;
-                foreach ($listProducts as $listProduct) {
-                    if ($category['category_id'] === $listProduct['category_id']) {
-                        $checkedProducts[] = $listProduct;
-                    };
-                }
-                $listProducts = $checkedProducts;
-                $increaseProduct = $category;
-                $searchIncreaseFieldset = 'disabled';
-                $selector = 'disabled';
-                $selectIncreaseFieldset = 'able';
-                $increase = 'show';
-            } else {
-                $searchIncreaseFieldset = '';
-                $increase = 'show';
-            }
+            $tableIncreaseSearch = $this->tableIncreaseSearch($postData, $listProducts, $listCategories);
+            extract($tableIncreaseSearch);
         } elseif (isset($postData['tableIncreaseSelect'])) {
-            $errors['increaseTable'] = [];
-
-            if (!isset($listSelectedProducts)) {
-                throw new HttpNotFoundException();
-            }
-
-            $checkExistProduct = isset($postData['product_name']);
-            $checkCorrectnessProduct = strpos($postData['product_name'], '@');
-
-            if ($checkExistProduct && $checkCorrectnessProduct) {
-                $product['product_name'] = $postData['product_name'];
-                $product['product_id'] = strstr($product['product_name'], '@', true);
-                $product['product_name'] = substr(strstr($product['product_name'], '@', false), 1);
-                $errors['increaseTable'] = $errors['increaseTable'] + $this->validate->productValidate($product, $listProducts, 'select');
-                $errors['increaseTable'] = $errors['increaseTable'] + $this->validate->contractProductValidate($product, $listSelectedProducts, 'increase');
-            } else {
-                $errors['increaseTable']['product_name'] = '商品を選択肢から選んでください';
-            }
-
-            if (!count($errors['increaseTable'])) {
-                foreach ($listProducts as $listProduct) {
-                    if ($product['product_id'] === $listProduct['product_id']) {
-                        $checkedProduct = $listProduct;
-                        $checkedProduct['product_name'] = $checkedProduct['name'];
-                    };
-                }
-                $increaseProduct = $checkedProduct;
-
-                $tableOutput['product'] = $increaseProduct;
-                $searchIncreaseFieldset = 'disabled';
-                $selector = 'disabled';
-                $increaseFieldset = '';
-                $increase = 'show';
-            } else {
-                if (!isset($increaseProduct['product_id'])) {
-                    $increaseProduct = $contract['product'];
-                }
-                foreach ($listProducts as $listProduct) {
-                    if ($increaseProduct['category_id'] === $listProduct['category_id']) {
-                        $checkedProducts[] = $listProduct;
-                    };
-                }
-                $listProducts = $checkedProducts;
-
-                $searchIncreaseFieldset = 'disabled';
-                $selector = 'disabled';
-                $selectIncreaseFieldset = 'able';
-                $increase = 'show';
-            }
-            $searchIncreaseFieldset = 'disabled';
-            $selector = 'disabled';
-            $increaseFieldset = '';
-            $increase = 'show';
+            $tableIncreaseSelect = $this->tableIncreaseSelect($postData, $listProducts, $contract, $listSelectedProducts);
+            extract($tableIncreaseSelect);
         } elseif (isset($postData['tableIncrease'])) {
-            $errors['increaseTable'] = [];
-
-            if (isset($contract['product']['product_id'])) {
-                $increaseProduct = $contract['product'];
-            } else {
-                throw new HttpNotFoundException();
-            }
-            $checkExistProductPrice = isset($postData['increase_price']);
-            $checkExistProductNumber = isset($postData['number']);
-
-            if ($checkExistProductPrice && $checkExistProductNumber) {
-                $increaseProduct = [
-                    'product_id' => $contract['product']['product_id'],
-                    'product_name' => $contract['product']['product_name'],
-                    'price' => trim(str_replace(',', '', $postData['increase_price'])),
-                    'number' => trim($postData['number']),
-                    'list_price' => $contract['product']['list_price'],
-                    'category_name' => $contract['product']['category_name'],
-                    'category_id' => $contract['product']['category_id'],
-                    'quantity' => $contract['product']['quantity'],
-                ];
-                if ($contract['contract_type'] === 'purchase') {
-                    $increaseProduct['purchase_contract_id'] = $contract['purchase_contract_id'];
-                } elseif ($contract['contract_type'] === 'sales') {
-                    $increaseProduct['sales_contract_id'] = $contract['sales_contract_id'];
-                }
-                $errors['increaseTable'] = $errors['increaseTable'] + $this->validate->productValidate($increaseProduct);
-            } else {
-                throw new HttpNotFoundException();
-            }
-
-            if (!count($errors['increaseTable'])) {
-                if ($contract['contract_type'] === 'purchase') {
-                    $sqlPurchaseProducts->insert($increaseProduct);
-                    $sqlStock->increase($increaseProduct);
-                    $listSelectedProducts = $sqlPurchaseProducts->fetchPurchaseProduct($contract);
-                    $this->convert->convertJson($listSelectedProducts, 'purchaseProduct', $userId);
-                } elseif ($contract['contract_type'] === 'sales') {
-                    $sqlSalesProducts->insert($increaseProduct);
-                    $sqlStock->decrease($increaseProduct);
-                    $listSelectedProducts = $sqlSalesProducts->fetchSalesProduct($contract);
-                    $this->convert->convertJson($listSelectedProducts, 'salesProduct', $userId);
-                }
-                $increaseProduct = [];
-                $tableOutput['product'] = [];
-            } else {
-                $searchIncreaseFieldset = 'disabled';
-                $selector = 'disabled';
-                $increaseFieldset = '';
-                $increase = 'show';
-            }
+            $tableIncrease = $this->tableIncrease($postData, $contract);
+            extract($tableIncrease);
         }
+
+        $judgeContractType = $this->judgeContractType($contract, $userId);
+        extract($judgeContractType);
 
         // テーブルの挿入
         ob_start();
@@ -424,5 +230,357 @@ class Controller
         $tableOutput['table'] = ob_get_clean();
 
         return $tableOutput;
+    }
+
+    private function tableEditingSelect($postData, $listProducts, $listSelectedProducts)
+    {
+        $errors['editingTable'] = [];
+
+        $checkExistProduct = isset($postData['product_name']);
+        $checkCorrectnessProduct = strpos($postData['product_name'], '@');
+
+        if ($checkExistProduct && $checkCorrectnessProduct) {
+            $product['product_id'] = strstr($postData['product_name'], '@', true);
+            $product['product_name'] = substr(strstr($postData['product_name'], '@', false), 1);
+            $errors['editingTable'] = $errors['editingTable'] + $this->validate->productValidate($product, $listProducts, 'select');
+            $errors['editingTable'] = $errors['editingTable'] + $this->validate->contractProductValidate($product, $listSelectedProducts, 'editing');
+            foreach ($listSelectedProducts as $listSelectedProduct) {
+                if ((int)$product['product_id'] === $listSelectedProduct['product_id']) {
+                    $editingProduct = $listSelectedProduct;
+                }
+            }
+        } else {
+            $errors['editingTable']['product_name'] = '商品を選択肢から選んでください';
+        }
+
+        if (!count($errors['editingTable'])) {
+            $tableOutput['product'] = $editingProduct;
+            $selectEditingFieldset = 'disabled';
+            $editingFieldset = 'able';
+            $selector = 'disabled';
+            $editing = 'show';
+        } else {
+            $editing = 'show';
+            $selectEditingFieldset = null;
+            $editingFieldset = null;
+            $selector = null;
+            $tableOutput['product'] = null;
+        }
+
+        return [
+            'errors' => $errors,
+            'editingProduct' => $editingProduct,
+            'tableOutput' => $tableOutput,
+            'selectEditingFieldset' => $selectEditingFieldset,
+            'editingFieldset' => $editingFieldset,
+            'selector' => $selector,
+            'editing' => $editing,
+        ];
+    }
+
+    private function tableEditingDelete($postData, $listProducts, $listSelectedProducts, $contract)
+    {
+        $errors['editingTable'] = [];
+
+        $checkExistProduct = isset($postData['product_name']);
+        $checkCorrectnessProduct = strpos($postData['product_name'], '@');
+
+        if ($checkExistProduct && $checkCorrectnessProduct) {
+            $product['product_id'] = strstr($postData['product_name'], '@', true);
+            $product['product_name'] = substr(strstr($postData['product_name'], '@', false), 1);
+            $errors['editingTable'] = $errors['editingTable'] + $this->validate->productValidate($product, $listProducts, 'select');
+            $errors['editingTable'] = $errors['editingTable'] + $this->validate->contractProductValidate($product, $listSelectedProducts, 'editing');
+        } else {
+            $errors['editingTable']['product_name'] = '商品を選択肢から選んでください';
+        }
+
+        if (!count($errors['editingTable'])) {
+
+            foreach ($listSelectedProducts as $listSelectedProduct) {
+                if ((int)$product['product_id'] === $listSelectedProduct['product_id']) {
+                    $editingProduct = $listSelectedProduct;
+                }
+            }
+
+            if ($contract['contract_type'] === 'purchase') {
+                $sqlPurchaseProducts = $this->databaseManager->get('PurchaseProduct');
+                $sqlStock = $this->databaseManager->get('Stock');
+                $sqlPurchaseProducts->delete($editingProduct);
+                $sqlStock->decrease($editingProduct);
+            } elseif ($contract['contract_type'] === 'sales') {
+                $sqlSalesProducts = $this->databaseManager->get('SalesProduct');
+                $sqlStock = $this->databaseManager->get('Stock');
+                $sqlSalesProducts->delete($editingProduct);
+                $sqlStock->increase($editingProduct);
+            }
+            $editingProduct = [];
+            $editing = null;
+        } else {
+            $editing = 'show';
+            $editingProduct = $product;
+        }
+
+        return [
+            'editingProduct' => $editingProduct,
+            'editing' => $editing,
+            'errors' => $errors,
+        ];
+    }
+
+    private function tableEditingUpdate($postData, $contract, $listSelectedProducts)
+    {
+        $errors['editingTable'] = [];
+
+        if (isset($contract['product']['product_id'])) {
+            $editingProduct = $contract['product'];
+        } else {
+            throw new HttpNotFoundException();
+        }
+        $checkExistProductPrice = isset($postData['editing_price']);
+        $checkExistProductNumber = isset($postData['number']);
+
+        if ($checkExistProductPrice && $checkExistProductNumber) {
+            $editingProduct = [
+                'product_id' => $contract['product']['product_id'],
+                'product_name' => $contract['product']['product_name'],
+                'price' => trim(str_replace(',', '', $postData['editing_price'])),
+                'number' => trim($postData['number']),
+                'list_price' => $contract['product']['list_price'],
+                'category_name' => $contract['product']['category_name'],
+                'category_id' => $contract['product']['category_id'],
+                'quantity' => $contract['product']['quantity'],
+            ];
+            if ($contract['contract_type'] === 'purchase') {
+                $editingProduct['purchase_contract_id'] = $contract['purchase_contract_id'];
+            } elseif ($contract['contract_type'] === 'sales') {
+                $editingProduct['sales_contract_id'] = $contract['sales_contract_id'];
+            }
+            $errors['editingTable'] = $errors['editingTable'] + $this->validate->productValidate($editingProduct);
+        } else {
+            throw new HttpNotFoundException();
+        }
+
+        if (!count($errors['editingTable'])) {
+
+            foreach ($listSelectedProducts as $listSelectedProduct) {
+                if ($listSelectedProduct['product_id'] === $editingProduct['product_id']) {
+                    $selectedProduct = $listSelectedProduct;
+                }
+            }
+
+            $updateStock['number'] = $editingProduct['number'] - $selectedProduct['number'];
+
+            if ($contract['contract_type'] === 'purchase') {
+                $sqlPurchaseProducts = $this->databaseManager->get('PurchaseProduct');
+                $sqlStock = $this->databaseManager->get('Stock');
+                $sqlPurchaseProducts->update($editingProduct);
+                $updateStock['product_id'] = $editingProduct['product_id'];
+                $sqlStock->increase($updateStock);
+            } elseif ($contract['contract_type'] === 'sales') {
+                $sqlSalesProducts = $this->databaseManager->get('SalesProduct');
+                $sqlStock = $this->databaseManager->get('Stock');
+                $sqlSalesProducts->update($editingProduct);
+                $updateStock['product_id'] = $editingProduct['product_id'];
+                $sqlStock->decrease($updateStock);
+            }
+            $editingProduct = [];
+            $selectEditingFieldset = null;
+            $editingFieldset = null;
+            $selector = null;
+            $editing = null;
+        } else {
+            $selectEditingFieldset = 'disabled';
+            $editingFieldset = 'able';
+            $selector = 'disabled';
+            $editing = 'show';
+        }
+
+        return [
+            'selectEditingFieldset' => $selectEditingFieldset,
+            'editingFieldset' => $editingFieldset,
+            'selector' => $selector,
+            'editingProduct' => $editingProduct,
+            'editing' => $editing,
+            'errors' => $errors,
+        ];
+    }
+
+    private function tableIncreaseSearch($postData, $listProducts, $listCategories)
+    {
+        $errors['increaseTable'] = [];
+
+        $checkExistCategory = isset($postData['category_name']);
+        $checkCorrectnessCategory = strpos($postData['category_name'], '@');
+
+        if ($checkExistCategory && $checkCorrectnessCategory) {
+            $category['category_name'] = $postData['category_name'];
+            $category['category_id'] = strstr($category['category_name'], '@', true);
+            $category['category_name'] = substr(strstr($category['category_name'], '@', false), 1);
+            $errors['increaseTable'] = $this->validate->categoryValidate($category, $listCategories, 'select', $listProducts);
+        } else {
+            $errors['increaseTable']['category_name'] = 'カテゴリーを選択肢から選んでください';
+        }
+
+        if (!count($errors['increaseTable'])) {
+            $tableOutput['product'] = $category;
+            foreach ($listProducts as $listProduct) {
+                if ($category['category_id'] === $listProduct['category_id']) {
+                    $checkedProducts[] = $listProduct;
+                };
+            }
+            $listProducts = $checkedProducts;
+            $increaseProduct = $category;
+            $searchIncreaseFieldset = 'disabled';
+            $selector = 'disabled';
+            $selectIncreaseFieldset = 'able';
+            $increase = 'show';
+        } else {
+            $searchIncreaseFieldset = '';
+            $increase = 'show';
+            $tableOutput['product'] = null;
+            $selector = null;
+            $selectIncreaseFieldset = null;
+        }
+
+        return [
+            'selectIncreaseFieldset' => $selectIncreaseFieldset,
+            'searchIncreaseFieldset' => $searchIncreaseFieldset,
+            'selector' => $selector,
+            'increaseProduct' => $increaseProduct,
+            'listProducts' => $listProducts,
+            'increase' => $increase,
+            'errors' => $errors,
+            'tableOutput' => $tableOutput,
+        ];
+    }
+
+    private function tableIncreaseSelect($postData, $listProducts, $contract, $listSelectedProducts)
+    {
+        $errors['increaseTable'] = [];
+
+        if (!isset($listSelectedProducts)) {
+            throw new HttpNotFoundException();
+        }
+
+        $checkExistProduct = isset($postData['product_name']);
+        $checkCorrectnessProduct = strpos($postData['product_name'], '@');
+
+        if ($checkExistProduct && $checkCorrectnessProduct) {
+            $product['product_name'] = $postData['product_name'];
+            $product['product_id'] = strstr($product['product_name'], '@', true);
+            $product['product_name'] = substr(strstr($product['product_name'], '@', false), 1);
+            $errors['increaseTable'] = $errors['increaseTable'] + $this->validate->productValidate($product, $listProducts, 'select');
+            $errors['increaseTable'] = $errors['increaseTable'] + $this->validate->contractProductValidate($product, $listSelectedProducts, 'increase');
+        } else {
+            $errors['increaseTable']['product_name'] = '商品を選択肢から選んでください';
+        }
+
+        if (!count($errors['increaseTable'])) {
+            foreach ($listProducts as $listProduct) {
+                if ($product['product_id'] === $listProduct['product_id']) {
+                    $checkedProduct = $listProduct;
+                };
+            }
+            $increaseProduct = $checkedProduct;
+
+            $tableOutput['product'] = $increaseProduct;
+            $searchIncreaseFieldset = 'disabled';
+            $selector = 'disabled';
+            $increaseFieldset = '';
+            $increase = 'show';
+        } else {
+            if (!isset($increaseProduct['product_id'])) {
+                $increaseProduct = $contract['product'];
+            }
+            foreach ($listProducts as $listProduct) {
+                if ($increaseProduct['category_id'] === $listProduct['category_id']) {
+                    $checkedProducts[] = $listProduct;
+                };
+            }
+            $listProducts = $checkedProducts;
+            $increaseFieldset = null;
+            $searchIncreaseFieldset = null;
+            $selector = null;
+            $increase = 'show';
+            $tableOutput['product'] = null;
+        }
+
+        return [
+            'searchIncreaseFieldset' => $searchIncreaseFieldset,
+            'increaseFieldset' => $increaseFieldset,
+            'selector' => $selector,
+            'increaseProduct' => $increaseProduct,
+            'increase' => $increase,
+            'errors' => $errors,
+            'tableOutput' => $tableOutput,
+            'listProducts' => $listProducts,
+        ];
+    }
+
+    private function tableIncrease($postData, $contract)
+    {
+        $errors['increaseTable'] = [];
+
+        if (isset($contract['product']['product_id'])) {
+            $increaseProduct = $contract['product'];
+        } else {
+            throw new HttpNotFoundException();
+        }
+        $checkExistProductPrice = isset($postData['increase_price']);
+        $checkExistProductNumber = isset($postData['number']);
+
+        if ($checkExistProductPrice && $checkExistProductNumber) {
+            $increaseProduct = [
+                'product_id' => $contract['product']['product_id'],
+                'product_name' => $contract['product']['product_name'],
+                'price' => trim(str_replace(',', '', $postData['increase_price'])),
+                'number' => trim($postData['number']),
+                'list_price' => $contract['product']['list_price'],
+                'category_name' => $contract['product']['category_name'],
+                'category_id' => $contract['product']['category_id'],
+                'quantity' => $contract['product']['quantity'],
+            ];
+            if ($contract['contract_type'] === 'purchase') {
+                $increaseProduct['purchase_contract_id'] = $contract['purchase_contract_id'];
+            } elseif ($contract['contract_type'] === 'sales') {
+                $increaseProduct['sales_contract_id'] = $contract['sales_contract_id'];
+            }
+            $errors['increaseTable'] = $errors['increaseTable'] + $this->validate->productValidate($increaseProduct);
+        } else {
+            throw new HttpNotFoundException();
+        }
+
+        if (!count($errors['increaseTable'])) {
+            if ($contract['contract_type'] === 'purchase') {
+                $sqlPurchaseProducts = $this->databaseManager->get('PurchaseProduct');
+                $sqlStock = $this->databaseManager->get('Stock');
+                $sqlPurchaseProducts->insert($increaseProduct);
+                $sqlStock->increase($increaseProduct);
+            } elseif ($contract['contract_type'] === 'sales') {
+                $sqlSalesProducts = $this->databaseManager->get('SalesProduct');
+                $sqlStock = $this->databaseManager->get('Stock');
+                $sqlSalesProducts->insert($increaseProduct);
+                $sqlStock->decrease($increaseProduct);
+            }
+            $increaseProduct = [];
+            $searchIncreaseFieldset = null;
+            $selector = null;
+            $increaseFieldset = null;
+            $increase = null;
+        } else {
+            $searchIncreaseFieldset = 'disabled';
+            $selector = 'disabled';
+            $increaseFieldset = 'able';
+            $increase = 'show';
+        }
+
+        return [
+            'searchIncreaseFieldset' => $searchIncreaseFieldset,
+            'increaseFieldset' => $increaseFieldset,
+            'selector' => $selector,
+            'increaseProduct' => $increaseProduct,
+            'increase' => $increase,
+            'errors' => $errors,
+        ];
     }
 }

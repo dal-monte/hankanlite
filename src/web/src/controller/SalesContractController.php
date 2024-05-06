@@ -1,23 +1,12 @@
 <?php
 
-$errors = [];
-
 class SalesContractController extends Controller
 {
     public function index()
     {
-        $navbar = $this->navbar;
-        $role = "not";
-
         session_start();
-        $token = $this->createToken();
 
-        if (isset($_SESSION["role"])) {
-            $role = $_SESSION["role"];
-        }
-        if (!in_array("sales", $navbar[$role])) {
-            throw new HttpNotFoundException();
-        }
+        $token = $this->securityCheck("sales");
 
         $userId = '';
 
@@ -57,24 +46,11 @@ class SalesContractController extends Controller
 
     public function increase()
     {
-        if (!$this->request->isPost()) {
-            throw new HttpNotFoundException();
-        }
+        session_start();
+
+        $token = $this->securityCheck("sales");
 
         $errors['increase'] = [];
-
-        $navbar = $this->navbar;
-        $role = "not";
-
-        session_start();
-        $token = $this->judgeToken();
-
-        if (isset($_SESSION["role"])) {
-            $role = $_SESSION["role"];
-        }
-        if (!in_array("sales", $navbar[$role])) {
-            throw new HttpNotFoundException();
-        }
 
         if (isset($_SESSION["now_user_id"])) {
             $userId = $_SESSION["now_user_id"];
@@ -128,7 +104,7 @@ class SalesContractController extends Controller
             $_SESSION['salesIncrease'] = $contract;
             $actionName = $this->actionName; //テーブルのID指定
             $controllerName = $this->controllerName; //submitの遷移先情報用
-            $tableOutput = $this->tableRender($actionName, $controllerName, $contract, $userId);
+            $tableOutput = $this->tableRender($actionName, $controllerName, $contract, $userId, $token);
             $table = $tableOutput['table'];
             $increaseFieldset = 'disabled';
         }
@@ -150,24 +126,9 @@ class SalesContractController extends Controller
 
     public function increaseTable()
     {
-        if (!$this->request->isPost()) {
-            throw new HttpNotFoundException();
-        }
-
-        $errors = [];
-
-        $navbar = $this->navbar;
-        $role = "not";
-
         session_start();
-        $token = $this->judgeToken();
 
-        if (isset($_SESSION["role"])) {
-            $role = $_SESSION["role"];
-        }
-        if (!in_array("sales", $navbar[$role])) {
-            throw new HttpNotFoundException();
-        }
+        $token = $this->securityCheck("sales");
 
         if (isset($_SESSION["now_user_id"]) && isset($_SESSION["salesIncrease"])) {
             $userId = $_SESSION["now_user_id"];
@@ -194,7 +155,7 @@ class SalesContractController extends Controller
         }
         $controllerName = $this->controllerName; //submitの遷移先情報用
 
-        $tableOutput = $this->tableRender($actionName, $controllerName, $contract, $userId, $postData);
+        $tableOutput = $this->tableRender($actionName, $controllerName, $contract, $userId, $token, $postData);
         $table = $tableOutput['table'];
         if (isset($tableOutput['product'])) {
             $_SESSION["salesIncrease"]['product'] = $tableOutput['product'];
@@ -202,7 +163,7 @@ class SalesContractController extends Controller
 
         return $this->render([
             'title' => '販売契約の登録',
-            'errors' => $errors,
+            'errors' => [],
             'table' => $table,
             'increaseSession' => 'show',
             'increaseContract' => $contract,
@@ -216,24 +177,9 @@ class SalesContractController extends Controller
 
     public function editing()
     {
-        if (!$this->request->isPost()) {
-            throw new HttpNotFoundException();
-        }
-
-        $errors['editing'] = [];
-
-        $navbar = $this->navbar;
-        $role = "not";
-
         session_start();
-        $token = $this->judgeToken();
 
-        if (isset($_SESSION["role"])) {
-            $role = $_SESSION["role"];
-        }
-        if (!in_array("sales", $navbar[$role])) {
-            throw new HttpNotFoundException();
-        }
+        $token = $this->securityCheck("sales");
 
         if (isset($_SESSION["now_user_id"])) {
             $userId = $_SESSION["now_user_id"];
@@ -260,111 +206,17 @@ class SalesContractController extends Controller
         $this->convert->convertJson($listSalesContracts, 'salesContract');
 
         if (isset($_POST['search'])) {
-            if (!isset($_POST['customer_name'])) {
-                throw new HttpNotFoundException();
-            }
-
-            if (strpos($_POST['customer_name'], '@')) {
-                $contract['customer_id'] = strstr($_POST['customer_name'], '@', true);
-                $contract['customer_name'] = substr(strstr($_POST['customer_name'], '@', false), 1);
-                $errors['editing'] = $errors['editing'] + $this->validate->customerValidate($contract, $listCustomers, 'select');
-                $errors['editing'] = $errors['editing'] + $this->validate->contractValidate($contract, $listSalesContracts, 'search');
-            } else {
-                $errors['editing']['customer_name'] = '選択肢から選んでください';
-            }
-
-            if (!count($errors['editing'])) {
-                $selector = 'disabled';
-                $_SESSION['salesEditing'] = $contract;
-                foreach ($listSalesContracts as $listSalesContracts) {
-                    if ($contract['customer_id'] === $listSalesContracts['customer_id']) {
-                        $listSalesContracts['contract_id'] = $listSalesContracts['sales_contract_id'];
-                        $checkedSalesContracts[] = $listSalesContracts;
-                    }
-                }
-                $listSalesContracts = $checkedSalesContracts;
-                $editingSearchFieldset = 'disabled';
-                $editingSelectFieldset = '';
-            }
+            $editingSearch = $this->editingSearch($listCustomers, $listSalesContracts);
+            extract($editingSearch);
         } elseif (isset($_POST['select'])) {
-            if (isset($_SESSION['salesEditing'])) {
-                $contract = $_SESSION['salesEditing'];
-            } else {
-                throw new HttpNotFoundException();
-            }
-
-            if (isset($_POST['contract_id'])) {
-                $contract['contract_id'] = $_POST['contract_id'];
-                foreach ($listSalesContracts as $listSalesContracts) {
-                    if ($contract['customer_id'] === $listSalesContracts['customer_id']) {
-                        $listSalesContracts['contract_id'] = $listSalesContracts['sales_contract_id'];
-                        $checkedSalesContracts[] = $listSalesContracts;
-                    }
-                }
-                $listSalesContracts = $checkedSalesContracts;
-                $errors['editing'] = $errors['editing'] + $this->validate->contractValidate($contract, $listSalesContracts, 'select');
-            } else {
-                throw new HttpNotFoundException();
-            }
-
-            if (!count($errors['editing'])) {
-                $contract['contract_type'] = 'sales';
-                $_SESSION['salesEditing'] = $contract;
-                $actionName = $this->actionName; //テーブルのID指定
-                $controllerName = $this->controllerName; //submitの遷移先情報用
-                $tableOutput = $this->tableRender($actionName, $controllerName, $contract, $userId);
-                $table = $tableOutput['table'];
-                $selector = 'disabled';
-                $editingSearchFieldset = 'disabled';
-            }
+            $editingSelect = $this->editingSelect($listSalesContracts, $userId, $token);
+            extract($editingSelect);
         } elseif (isset($_POST['delete'])) {
-            if (isset($_SESSION['salesEditing'])) {
-                $contract = $_SESSION['salesEditing'];
-            } else {
-                throw new HttpNotFoundException();
-            }
-
-            if (isset($_POST['contract_id'])) {
-                $contract['contract_id'] = $_POST['contract_id'];
-            } else {
-                throw new HttpNotFoundException();
-            }
-
-            foreach ($listSalesContracts as $listSalesContracts) {
-                if ($contract['customer_id'] === $listSalesContracts['customer_id']) {
-                    $listSalesContracts['contract_id'] = $listSalesContracts['sales_contract_id'];
-                    $checkedSalesContracts[] = $listSalesContracts;
-                }
-            }
-            $listSalesContracts = $checkedSalesContracts;
-            $errors['editing'] = $errors['editing'] + $this->validate->contractValidate($contract, $listSalesContracts, 'select');
-            if (!count($errors['editing'])) {
-                $contract['sales_contract_id'] = $contract['contract_id'];
-                $sqlSalesProducts = $this->databaseManager->get('SalesProduct');
-                $listSalesProducts = $sqlSalesProducts->fetchSalesProduct($contract);
-
-                foreach ($listSalesProducts as $listSalesProduct) {
-                    $salesStocks[$listSalesProduct['product_id']] = $listSalesProduct['number'];
-                }
-                if (!empty($sqlStock)) {
-                    $sqlStock = $this->databaseManager->get('Stock');
-                    $sqlStock->increaseMulti($salesStocks);
-                }
-                unset($_SESSION["salesEditing"]);
-                $editingSelectFieldset = 'disabled';
-                $editingSession = '';
-                $sqlSalesContracts->delete($contract);
-                $contract = [];
-                $listSalesContracts = $sqlSalesContracts->fetchAllSalesContract();
-                $this->convert->convertJson($listSalesContracts, 'salesContract');
-                $editingSession = '';
-            }
+            $editingDelete = $this->editingDelete($listSalesContracts, $sqlSalesContracts);
+            extract($editingDelete);
         } else {
-            $editingSession = '';
-            if (isset($_SESSION["salesEditing"])) {
-                unset($_SESSION["salesEditing"]);
-            }
-            $contract = [];
+            $editingElse   = $this->editingElse();
+            extract($editingElse);
         }
 
         return $this->render([
@@ -386,24 +238,9 @@ class SalesContractController extends Controller
 
     public function editingTable()
     {
-        if (!$this->request->isPost()) {
-            throw new HttpNotFoundException();
-        }
-
-        $errors = [];
-
-        $navbar = $this->navbar;
-        $role = "not";
-
         session_start();
-        $token = $this->judgeToken();
 
-        if (isset($_SESSION["role"])) {
-            $role = $_SESSION["role"];
-        }
-        if (!in_array("sales", $navbar[$role])) {
-            throw new HttpNotFoundException();
-        }
+        $token = $this->securityCheck("sales");
 
         if (isset($_SESSION["now_user_id"]) && isset($_SESSION["salesEditing"])) {
             $userId = $_SESSION["now_user_id"];
@@ -429,7 +266,7 @@ class SalesContractController extends Controller
         }
         $controllerName = $this->controllerName; //submitの遷移先情報用
 
-        $tableOutput = $this->tableRender($actionName, $controllerName, $contract, $userId, $postData);
+        $tableOutput = $this->tableRender($actionName, $controllerName, $contract, $userId, $token, $postData);
         $table = $tableOutput['table'];
         if (isset($tableOutput['product'])) {
             $_SESSION["salesEditing"]['product'] = $tableOutput['product'];
@@ -437,7 +274,7 @@ class SalesContractController extends Controller
 
         return $this->render([
             'title' => '販売契約の編集',
-            'errors' => $errors,
+            'errors' => [],
             'table' => $table,
             'editingSession' => 'show',
             'editingContract' => $contract,
@@ -447,5 +284,196 @@ class SalesContractController extends Controller
             'taxRate' => $this->taxRate,
             'token' => $token,
         ], 'index');
+    }
+
+    private function editingSearch($listCustomers, $listSalesContracts)
+    {
+        $contract = [];
+        $table = '';
+        $selector = '';
+        $editingSelectFieldset = 'disabled';
+        $editingSearchFieldset = '';
+        $editingSession = 'show';
+        $errors['editing'] = [];
+
+        if (!isset($_POST['customer_name'])) {
+            throw new HttpNotFoundException();
+        }
+
+        if (strpos($_POST['customer_name'], '@')) {
+            $contract['customer_id'] = strstr($_POST['customer_name'], '@', true);
+            $contract['customer_name'] = substr(strstr($_POST['customer_name'], '@', false), 1);
+            $errors['editing'] = $errors['editing'] + $this->validate->customerValidate($contract, $listCustomers, 'select');
+            $errors['editing'] = $errors['editing'] + $this->validate->contractValidate($contract, $listSalesContracts, 'search');
+        } else {
+            $errors['editing']['customer_name'] = '選択肢から選んでください';
+        }
+
+        if (!count($errors['editing'])) {
+            $selector = 'disabled';
+            $_SESSION['salesEditing'] = $contract;
+            foreach ($listSalesContracts as $listSalesContracts) {
+                if ($contract['customer_id'] === $listSalesContracts['customer_id']) {
+                    $listSalesContracts['contract_id'] = $listSalesContracts['sales_contract_id'];
+                    $checkedSalesContracts[] = $listSalesContracts;
+                }
+            }
+            $listSalesContracts = $checkedSalesContracts;
+            $editingSearchFieldset = 'disabled';
+            $editingSelectFieldset = '';
+        }
+
+        return [
+            'contract' => $contract,
+            'table' => $table,
+            'selector' => $selector,
+            'errors' => $errors,
+            'editingSelectFieldset' => $editingSelectFieldset,
+            'editingSearchFieldset' => $editingSearchFieldset,
+            'editingSession' => $editingSession,
+            'listSalesContracts' => $listSalesContracts,
+        ];
+    }
+
+    private function editingSelect($listSalesContracts, $userId, $token)
+    {
+        $table = '';
+        $selector = '';
+        $editingSelectFieldset = 'disabled';
+        $editingSearchFieldset = '';
+        $editingSession = 'show';
+        $errors['editing'] = [];
+
+        if (isset($_SESSION['salesEditing'])) {
+            $contract = $_SESSION['salesEditing'];
+        } else {
+            throw new HttpNotFoundException();
+        }
+
+        if (isset($_POST['contract_id'])) {
+            $contract['contract_id'] = $_POST['contract_id'];
+            foreach ($listSalesContracts as $listSalesContracts) {
+                if ($contract['customer_id'] === $listSalesContracts['customer_id']) {
+                    $listSalesContracts['contract_id'] = $listSalesContracts['sales_contract_id'];
+                    $checkedSalesContracts[] = $listSalesContracts;
+                }
+            }
+            $listSalesContracts = $checkedSalesContracts;
+            $errors['editing'] = $errors['editing'] + $this->validate->contractValidate($contract, $listSalesContracts, 'select');
+        } else {
+            throw new HttpNotFoundException();
+        }
+
+        if (!count($errors['editing'])) {
+            $contract['contract_type'] = 'sales';
+            $_SESSION['salesEditing'] = $contract;
+            $actionName = $this->actionName; //テーブルのID指定
+            $controllerName = $this->controllerName; //submitの遷移先情報用
+            $tableOutput = $this->tableRender($actionName, $controllerName, $contract, $userId, $token);
+            $table = $tableOutput['table'];
+            $selector = 'disabled';
+            $editingSearchFieldset = 'disabled';
+        }
+
+        return [
+            'contract' => $contract,
+            'table' => $table,
+            'selector' => $selector,
+            'errors' => $errors,
+            'editingSelectFieldset' => $editingSelectFieldset,
+            'editingSearchFieldset' => $editingSearchFieldset,
+            'editingSession' => $editingSession,
+            'listSalesContracts' => $listSalesContracts,
+        ];
+    }
+
+    private function editingDelete($listSalesContracts, $sqlSalesContracts)
+    {
+        $table = '';
+        $selector = '';
+        $editingSelectFieldset = 'disabled';
+        $editingSearchFieldset = '';
+        $editingSession = 'show';
+        $errors['editing'] = [];
+
+        if (isset($_SESSION['salesEditing'])) {
+            $contract = $_SESSION['salesEditing'];
+        } else {
+            throw new HttpNotFoundException();
+        }
+
+        if (isset($_POST['contract_id'])) {
+            $contract['contract_id'] = $_POST['contract_id'];
+        } else {
+            throw new HttpNotFoundException();
+        }
+
+        foreach ($listSalesContracts as $listSalesContracts) {
+            if ($contract['customer_id'] === $listSalesContracts['customer_id']) {
+                $listSalesContracts['contract_id'] = $listSalesContracts['sales_contract_id'];
+                $checkedSalesContracts[] = $listSalesContracts;
+            }
+        }
+        $listSalesContracts = $checkedSalesContracts;
+        $errors['editing'] = $errors['editing'] + $this->validate->contractValidate($contract, $listSalesContracts, 'select');
+        if (!count($errors['editing'])) {
+            $contract['sales_contract_id'] = $contract['contract_id'];
+            $sqlSalesProducts = $this->databaseManager->get('SalesProduct');
+            $listSalesProducts = $sqlSalesProducts->fetchSalesProduct($contract);
+
+            foreach ($listSalesProducts as $listSalesProduct) {
+                $salesStocks[$listSalesProduct['product_id']] = $listSalesProduct['number'];
+            }
+            if (!empty($sqlStock)) {
+                $sqlStock = $this->databaseManager->get('Stock');
+                $sqlStock->increaseMulti($salesStocks);
+            }
+            unset($_SESSION["salesEditing"]);
+            $editingSelectFieldset = 'disabled';
+            $editingSession = '';
+            $sqlSalesContracts->delete($contract);
+            $contract = [];
+            $listSalesContracts = $sqlSalesContracts->fetchAllSalesContract();
+            $this->convert->convertJson($listSalesContracts, 'salesContract');
+            $editingSession = '';
+        }
+
+        return [
+            'contract' => $contract,
+            'table' => $table,
+            'selector' => $selector,
+            'errors' => $errors,
+            'editingSelectFieldset' => $editingSelectFieldset,
+            'editingSearchFieldset' => $editingSearchFieldset,
+            'editingSession' => $editingSession,
+            'listSalesContracts' => $listSalesContracts,
+        ];
+    }
+
+    private function editingElse()
+    {
+        $table = '';
+        $selector = '';
+        $editingSelectFieldset = 'disabled';
+        $editingSearchFieldset = '';
+        $editingSession = 'show';
+        $errors['editing'] = [];
+
+
+        $editingSession = '';
+        if (isset($_SESSION["salesEditing"])) {
+            unset($_SESSION["salesEditing"]);
+        }
+        $contract = [];
+
+        return [
+            'contract' => $contract,
+            'table' => $table,
+            'selector' => $selector,
+            'errors' => $errors,
+            'editingSelectFieldset' => $editingSelectFieldset,
+            'editingSearchFieldset' => $editingSearchFieldset,
+            'editingSession' => $editingSession,
+        ];
     }
 }

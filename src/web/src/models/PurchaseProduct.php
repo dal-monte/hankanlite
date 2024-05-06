@@ -4,7 +4,7 @@ class PurchaseProduct extends DatabaseModel
 {
     public function fetchPurchaseProduct($contract)
     {
-        return $this->search('SELECT p.name AS product_name, pp.product_id, c.name AS category_name, c.category_id, pp.purchase_price AS price, pp.number, pp.purchase_price * pp.number AS subtotal, p.list_price, s.quantity, pp.purchase_contract_id FROM purchase_products AS pp JOIN products AS p ON pp.product_id = p.product_id JOIN categories AS c ON p.category_id = c.category_id JOIN stocks AS s ON pp.product_id = s.product_id WHERE pp.purchase_contract_id = ?', ["i", $contract['purchase_contract_id']]);
+        return $this->search('SELECT p.product_name, pp.product_id, c.category_name, c.category_id, pp.purchase_price AS price, pp.number, pp.purchase_price * pp.number AS subtotal, p.list_price, s.quantity, pp.purchase_contract_id FROM purchase_products AS pp JOIN products AS p ON pp.product_id = p.product_id JOIN categories AS c ON p.category_id = c.category_id JOIN stocks AS s ON pp.product_id = s.product_id WHERE pp.purchase_contract_id = ?', ["i", $contract['purchase_contract_id']]);
     }
 
     public function insert($product)

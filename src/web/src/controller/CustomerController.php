@@ -1,23 +1,12 @@
 <?php
 
-$errors = [];
-
 class CustomerController extends Controller
 {
     public function index()
     {
-        $navbar = $this->navbar;
-        $role = "not";
-
         session_start();
-        $token = $this->createToken();
 
-        if (isset($_SESSION["role"])) {
-            $role = $_SESSION["role"];
-        }
-        if (!in_array("sales", $navbar[$role])) {
-            throw new HttpNotFoundException();
-        }
+        $token = $this->securityCheck("sales");
 
         if (isset($_SESSION['customer_id'])) {
             unset($_SESSION['customer_id']);
@@ -41,12 +30,9 @@ class CustomerController extends Controller
 
     public function increase()
     {
-        if (!$this->request->isPost()) {
-            throw new HttpNotFoundException();
-        }
-
         session_start();
-        $token = $this->judgeToken();
+
+        $token = $this->securityCheck("sales");
 
         if (isset($_SESSION['customer_id'])) {
             unset($_SESSION['customer_id']);
@@ -103,30 +89,15 @@ class CustomerController extends Controller
 
     public function editing()
     {
-        if (!$this->request->isPost()) {
-            throw new HttpNotFoundException();
-        }
-
-        $errors['editing'] = [];
-
-        $navbar = $this->navbar;
-        $role = "not";
-
         session_start();
-        $token = $this->judgeToken();
 
-        if (isset($_SESSION["role"])) {
-            $role = $_SESSION["role"];
-        }
-        if (!in_array("products", $navbar[$role])) {
-            throw new HttpNotFoundException();
-        }
+        $token = $this->securityCheck("sales");
 
         // modelsディレクトリのCustomerクラスをnewして$sqlCustomersに渡す
         $sqlCustomers = $this->databaseManager->get('Customer');
 
         if (isset($_POST['customer_name'])) {
-            $customer['customer_name'] = trim($_POST['customer_name']);
+            $postCustomer['customer_name'] = trim($_POST['customer_name']);
         } else {
             throw new HttpNotFoundException();
         }
@@ -139,80 +110,17 @@ class CustomerController extends Controller
         $editingFieldset = 'disabled';
         $selectFieldset = '';
         if (isset($_POST['select'])) {
-            $editing = 'show';
-            if (strpos($customer['customer_name'], '@')) {
-                $customer['customer_id'] = strstr($customer['customer_name'], '@', true);
-                $customer['name'] = substr(strstr($customer['customer_name'], '@', false), 1);
-                $errors['editing'] = $errors['editing'] + $this->validate->customerValidate($customer, $sqlCustomers, 'select');
-            } else {
-                $errors['editing']['customer_name'] = '選択肢から選んでください';
-            }
-
-            if (!count($errors['editing'])) {
-                $customer['customer_name'] = $customer['name'];
-                $_SESSION['customer_id'] = $customer['customer_id'];
-                $_SESSION['customer_name'] = $customer['customer_name'];
-                $editingFieldset = '';
-                $selectFieldset = 'disabled';
-            } else {
-                $customer = [];
-            }
+            $editingSelect = $this->editingSelect($postCustomer, $listCustomers);
+            extract($editingSelect);
         } elseif (isset($_POST['update'])) {
-            if (isset($_SESSION['customer_id'])) {
-                $customer['customer_id'] = $_SESSION['customer_id'];
-            } else {
-                throw new HttpNotFoundException();
-            }
-            $errors['editing'] = $errors['editing'] + $this->validate->customerValidate($customer);
-            if (!count($errors['editing'])) {
-                $sqlCustomers->update($customer);
-                $customer = [];
-                unset($_SESSION['customer_name']);
-                unset($_SESSION['customer_id']);
-                $listCustomers = $sqlCustomers->fetchAllCustomer();
-                $this->convert->convertJson($listCustomers, 'customer');
-            } else {
-                $customer['name'] = $_SESSION['customer_name'];
-                $editing = 'show';
-                $editingFieldset = '';
-                $selectFieldset = 'disabled';
-            }
+            $editingUpdate = $this->editingUpdate($postCustomer, $listCustomers, $sqlCustomers);
+            extract($editingUpdate);
         } elseif (isset($_POST['delete'])) {
-            if (strpos($customer['customer_name'], '@')) {
-                $customer['customer_id'] = strstr($customer['customer_name'], '@', true);
-                $customer['name'] = substr(strstr($customer['customer_name'], '@', false), 1);
-                $errors['editing'] = $errors['editing'] + $this->validate->customerValidate($customer, $sqlCustomers, 'delete');
-
-                $sqlProduct = $this->databaseManager->get('Product');
-                $busyCustomer = $sqlProduct->searchProducts($customer['customer_id']);
-                $boolBusyCustomer = !is_null($busyCustomer);
-                if ($boolBusyCustomer) {
-                    $errors['editing']['customer_name'] = '関連する商品があるため削除できません';
-                }
-            } else {
-                $errors['editing']['customer_name'] = '選択肢から選んでください';
-            }
-
-            if (!count($errors['editing'])) {
-                $customer['customer_name'] = $customer['name'];
-                $sqlCustomers->delete($customer);
-                $listCustomers = $sqlCustomers->fetchAllCustomer();
-                $this->convert->convertJson($listCustomers, 'purchaseProduct');
-                $customer = [];
-            } else {
-                $editing = 'show';
-                $editingFieldset = 'disabled';
-                $selectFieldset = '';
-                $customer = [];
-            }
+            $editingDelete = $this->editingDelete($postCustomer, $listCustomers, $sqlCustomers);
+            extract($editingDelete);
         } else {
-            $customer = [];
-            if (isset($_SESSION['customer_id'])) {
-                unset($_SESSION['customer_id']);
-            }
-            if (isset($_SESSION['customer_name'])) {
-                unset($_SESSION['customer_name']);
-            }
+            $editingElse   = $this->editingElse();
+            extract($editingElse);
         }
 
         return $this->render([
@@ -225,5 +133,145 @@ class CustomerController extends Controller
             'selectFieldset' => $selectFieldset,
             'token' => $token,
         ], 'index');
+    }
+
+    private function editingSelect($postCustomer, $listCustomers)
+    {
+        $errors['editing'] = [];
+        $editing = 'show';
+        $editingFieldset = 'disabled';
+        $selectFieldset = '';
+
+        if (strpos($postCustomer['customer_name'], '@')) {
+            $customer['customer_id'] = strstr($postCustomer['customer_name'], '@', true);
+            $customer['customer_name'] = substr(strstr($postCustomer['customer_name'], '@', false), 1);
+            $errors['editing'] = $errors['editing'] + $this->validate->customerValidate($customer, $listCustomers, 'select');
+        } else {
+            $errors['editing']['customer_name'] = '選択肢から選んでください';
+        }
+
+        if (!count($errors['editing'])) {
+            $_SESSION['customer_id'] = $customer['customer_id'];
+            $_SESSION['customer_name'] = $customer['customer_name'];
+            $editingFieldset = '';
+            $selectFieldset = 'disabled';
+        } else {
+            $customer = [];
+        }
+        return [
+            'editing' => $editing,
+            'customer' => $customer,
+            'errors' => $errors,
+            'listCustomers' => $listCustomers,
+            'editingFieldset' => $editingFieldset,
+            'selectFieldset' => $selectFieldset,
+        ];
+    }
+
+    private function editingUpdate($postCustomer, $listCustomers, $sqlCustomers)
+    {
+        $errors['editing'] = [];
+        $editing = '';
+        $editingFieldset = 'disabled';
+        $selectFieldset = '';
+
+        $customer['customer_name'] = $postCustomer['customer_name'];
+
+        if (isset($_SESSION['customer_id'])) {
+            $customer['customer_id'] = $_SESSION['customer_id'];
+        } else {
+            throw new HttpNotFoundException();
+        }
+        $errors['editing'] = $errors['editing'] + $this->validate->customerValidate($customer);
+        if (!count($errors['editing'])) {
+            $sqlCustomers->update($customer);
+            $customer = [];
+            unset($_SESSION['customer_name']);
+            unset($_SESSION['customer_id']);
+            $listCustomers = $sqlCustomers->fetchAllCustomer();
+            $this->convert->convertJson($listCustomers, 'customer');
+        } else {
+            $customer['category_name'] = $_SESSION['customer_name'];
+            $editing = 'show';
+            $editingFieldset = '';
+            $selectFieldset = 'disabled';
+        }
+
+        return [
+            'editing' => $editing,
+            'customer' => $customer,
+            'errors' => $errors,
+            'listCustomers' => $listCustomers,
+            'editingFieldset' => $editingFieldset,
+            'selectFieldset' => $selectFieldset,
+        ];
+    }
+
+    private function editingDelete($postCustomer, $listCustomers, $sqlCustomers)
+    {
+        $errors['editing'] = [];
+        $editing = '';
+        $editingFieldset = 'disabled';
+        $selectFieldset = '';
+
+        if (strpos($postCustomer['customer_name'], '@')) {
+            $customer['customer_id'] = strstr($postCustomer['customer_name'], '@', true);
+            $customer['customer_name'] = substr(strstr($postCustomer['customer_name'], '@', false), 1);
+            $errors['editing'] = $errors['editing'] + $this->validate->customerValidate($customer, $listCustomers, 'delete');
+
+            $sqlProduct = $this->databaseManager->get('Product');
+            $busyCustomer = $sqlProduct->searchProducts($customer['customer_id']);
+            $boolBusyCustomer = !is_null($busyCustomer);
+            if ($boolBusyCustomer) {
+                $errors['editing']['customer_name'] = '関連する商品があるため削除できません';
+            }
+        } else {
+            $errors['editing']['customer_name'] = '選択肢から選んでください';
+        }
+
+        if (!count($errors['editing'])) {
+            $sqlCustomers->delete($customer);
+            $listCustomers = $sqlCustomers->fetchAllCustomer();
+            $this->convert->convertJson($listCustomers, 'purchaseProduct');
+            $customer = [];
+        } else {
+            $editing = 'show';
+            $editingFieldset = 'disabled';
+            $selectFieldset = '';
+            $customer = [];
+        }
+
+        return [
+            'editing' => $editing,
+            'customer' => $customer,
+            'errors' => $errors,
+            'listCustomers' => $listCustomers,
+            'editingFieldset' => $editingFieldset,
+            'selectFieldset' => $selectFieldset,
+        ];
+    }
+
+    private function editingElse()
+    {
+        $errors['editing'] = [];
+        $editing = '';
+        $editingFieldset = 'disabled';
+        $selectFieldset = '';
+
+        $customer = [];
+        if (isset($_SESSION['customer_id'])) {
+            unset($_SESSION['customer_id']);
+        }
+        if (isset($_SESSION['customer_name'])) {
+            unset($_SESSION['customer_name']);
+        }
+
+        return [
+            'editing' => $editing,
+            'customer' => $customer,
+            'errors' => $errors,
+            'editingFieldset' => $editingFieldset,
+            'selectFieldset' => $selectFieldset,
+        ];
     }
 }

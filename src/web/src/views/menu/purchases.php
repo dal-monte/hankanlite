@@ -97,10 +97,18 @@ $body = 'class="bg-warning-subtle"';
 <div class="container d-flex">
     <div class="row mt-3 g-3">
         <div class="col-auto">
-            <a href="/supplier" class="btn btn-secondary btn-lg">仕入先業者登録・編集</a>
+            <form action="/supplier" method="post">
+                <input value="<?php if (isset($token)) : echo $token;
+                                endif; ?>" type="hidden" name="token">
+                <button type="submit" class="btn btn-secondary btn-lg">仕入先業者登録・編集</button>
+            </form>
         </div>
         <div class="col-auto">
-            <a href="/purchaseContract" class="btn btn-secondary btn-lg">仕入契約登録・編集</a>
+            <form action="/purchaseContract" method="post">
+                <input value="<?php if (isset($token)) : echo $token;
+                                endif; ?>" type="hidden" name="token">
+                <button type="submit" class="btn btn-secondary btn-lg">仕入契約登録・編集</button>
+            </form>
         </div>
     </div>
 </div>

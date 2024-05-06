@@ -15,7 +15,7 @@ $password = password_hash('hight882255', PASSWORD_DEFAULT);
 $insertTableSql = <<<EOT
 INSERT INTO users (
     user_id,
-    name,
+    user_name,
     password,
     role_id
 ) VALUES (

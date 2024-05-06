@@ -90,12 +90,12 @@ $link = '
                             <label for="supplier_name" class="col-form-label">ID / 業者名</label>
                             <div class="col-auto">
                                 <select class="form-select" aria-label="Default select example" id="supplier_name" name="supplier_name">
-                                    <option <?php if (isset($editingSupplier['supplier_name'])) : echo 'value=' . $editingSupplier['supplier_id'] . '@' . escape($editingSupplier['supplier_name']); ?> selected>
-                                    <?php echo escape($editingSupplier['supplier_id']) . ' / ' .  escape($editingSupplier['name']);
+                                    <option <?php if (isset($editingSupplier['supplier_id'])) : echo 'value=' . escape($editingSupplier['supplier_id']) . '@' . escape($editingSupplier['supplier_name']); ?> selected>
+                                    <?php echo escape($editingSupplier['supplier_id']) . ' / ' .  escape($editingSupplier['supplier_name']);
                                             else : echo 'selected>' . '業者を選択して下さい';
                                             endif; ?></option>
                                     <?php if (isset($suppliers)) : foreach ($suppliers as $supplier) : ?>
-                                            <option value="<?php echo $supplier['supplier_id'] . '@' . escape($supplier['name']); ?>"><?php echo escape($supplier['supplier_id']) . ' / ' . escape($supplier['name']); ?></option>
+                                            <option value="<?php echo escape($supplier['supplier_id']) . '@' . escape($supplier['supplier_name']); ?>"><?php echo escape($supplier['supplier_id']) . ' / ' . escape($supplier['supplier_name']); ?></option>
                                     <?php endforeach;
                                     endif; ?>
                                 </select>

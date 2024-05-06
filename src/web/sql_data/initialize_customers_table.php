@@ -15,7 +15,7 @@ $mysqli->query('DROP TABLE IF EXISTS customers');
 $createTableSql = <<<EOT
 CREATE TABLE IF NOT EXISTS customers (
     customer_id INT NOT NULL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
+    customer_name VARCHAR(100) NOT NULL,
     index(customer_id)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4
 EOT;

@@ -5,7 +5,7 @@ $(document).ready(function () {
     data: "user_id"
   }, {
     title: "社員名",
-    data: "name"
+    data: "user_name"
   }, {
     title: "役割",
     data: "role"

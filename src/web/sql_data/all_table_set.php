@@ -29,7 +29,7 @@ $mysqli->query('DROP TABLE IF EXISTS users');
 $categoriesCreateTableSql = <<<EOT
 CREATE TABLE IF NOT EXISTS categories (
     category_id INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL UNIQUE KEY,
+    category_name VARCHAR(100) NOT NULL UNIQUE KEY,
     index(category_id)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4
 EOT;
@@ -40,7 +40,7 @@ $mysqli->query($categoriesCreateTableSql);
 $customersCreateTableSql = <<<EOT
 CREATE TABLE IF NOT EXISTS customers (
     customer_id INT NOT NULL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
+    customer_name VARCHAR(100) NOT NULL,
     index(customer_id)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4
 EOT;
@@ -48,21 +48,10 @@ EOT;
 $mysqli->query($customersCreateTableSql);
 
 
-$employeesCreateTableSql = <<<EOT
-CREATE TABLE IF NOT EXISTS employees (
-    id INT NOT NULL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=INNODB DEFAULT CHARSET=utf8mb4
-EOT;
-
-$mysqli->query($employeesCreateTableSql);
-
-
 $productsCreateTableSql = <<<EOT
 CREATE TABLE IF NOT EXISTS products (
     product_id INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL UNIQUE KEY,
+    product_name VARCHAR(100) NOT NULL UNIQUE KEY,
     list_price INT NOT NULL,
     category_id INT NOT NULL,
     index(category_id),
@@ -168,7 +157,7 @@ $mysqli->query($stocksCreateTableSql);
 $suppliersCreateTableSql = <<<EOT
 CREATE TABLE IF NOT EXISTS suppliers (
     supplier_id INT NOT NULL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
+    supplier_name VARCHAR(100) NOT NULL,
     index(supplier_id)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4
 EOT;
@@ -179,7 +168,7 @@ $mysqli->query($suppliersCreateTableSql);
 $usersCreateTableSql = <<<EOT
 CREATE TABLE IF NOT EXISTS users (
     user_id INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
+    user_name VARCHAR(100) NOT NULL,
     password VARCHAR(255) NOT NULL,
     role_id INT NOT NULL,
     index(role_id),
@@ -223,7 +212,7 @@ $password = password_hash('hight882255', PASSWORD_DEFAULT);
 $usersInsertTableSql = <<<EOT
 INSERT INTO users (
     user_id,
-    name,
+    user_name,
     password,
     role_id
 ) VALUES (

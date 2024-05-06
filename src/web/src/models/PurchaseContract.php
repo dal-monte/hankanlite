@@ -4,7 +4,7 @@ class PurchaseContract extends DatabaseModel
 {
     public function fetchAllPurchaseContract()
     {
-        return $this->fetchAll("SELECT DATE_FORMAT(CONVERT_TZ(pc.created_at,'+00:00','+09:00'), '%Y年%m月%d日') AS created_at, pc.purchase_contract_id, pc.supplier_id, s.name AS supplier_name FROM purchase_contracts AS pc JOIN suppliers AS s ON pc.supplier_id = s.supplier_id");
+        return $this->fetchAll("SELECT DATE_FORMAT(CONVERT_TZ(pc.created_at,'+00:00','+09:00'), '%Y年%m月%d日') AS created_at, pc.purchase_contract_id, pc.supplier_id, s.supplier_name FROM purchase_contracts AS pc JOIN suppliers AS s ON pc.supplier_id = s.supplier_id");
     }
 
     public function insert($contract)

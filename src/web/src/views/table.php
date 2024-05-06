@@ -37,12 +37,12 @@ if (isset($negativeQuantities)) {
                         <label for="category_name" class="col-form-label">カテゴリー</label>
                         <div class="col-auto">
                             <select class="form-select" name="category_name" id="category_name" aria-label="Default select example">
-                                <option value="<?php if (isset($increaseProduct['category_name'])) : echo escapeTable($increaseProduct['category_id']) . '@' . escapeTable($increaseProduct['category_name']);
+                                <option value="<?php if (isset($increaseProduct['category_id'])) : echo escapeTable($increaseProduct['category_id']) . '@' . escapeTable($increaseProduct['category_name']);
                                                 endif; ?>" selected><?php if (isset($increaseProduct['category_name'])) : echo escapeTable($increaseProduct['category_name']);
                                                                     else : echo 'カテゴリー名を選択して下さい';
                                                                     endif; ?></option>
                                 <?php if (isset($listUsedCategories)) : foreach ($listUsedCategories as $category) : ?>
-                                        <option value="<?php echo $category['category_id'] . '@' . escapeTable($category['name']); ?>"><?php echo escapeTable($category['name']); ?></option>
+                                        <option value="<?php echo escapeTable($category['category_id']) . '@' . escapeTable($category['category_name']); ?>"><?php echo escapeTable($category['category_name']); ?></option>
                                 <?php endforeach;
                                 endif; ?>
                             </select>
@@ -62,13 +62,13 @@ if (isset($negativeQuantities)) {
                         <label for="product_name" class="col-form-label">商品</label>
                         <div class="col-auto">
                             <select class="form-select" name="product_name" id="product_name" aria-label="Default select example">
-                                <option value="<?php if (isset($increaseProduct['product_id'])) : echo $increaseProduct['product_id'] . '@' . escapeTable($increaseProduct['product_name']);
-                                                endif; ?>" selected>
-                                    <?php if (isset($increaseProduct['product_name'])) : echo escapeTable($increaseProduct['product_name']);
-                                    else : echo '商品を選択して下さい';
-                                    endif; ?></option>
+                                <option <?php if (isset($increaseProduct['product_id'])) : echo 'value=' . $increaseProduct['product_id'] . '@' . escapeTable($increaseProduct['product_name']);
+                                        ?> selected>
+                                <?php echo escapeTable($increaseProduct['product_name']);
+                                        else : echo 'selected>' . '商品を選択して下さい';
+                                        endif; ?></option>
                                 <?php if (isset($listProducts)) : foreach ($listProducts as $product) : ?>
-                                        <option value="<?php echo $product['product_id'] . '@' . escapeTable($product['name']); ?>"><?php echo escapeTable($product['name']); ?></option>
+                                        <option value="<?php echo escapeTable($product['product_id']) . '@' . escapeTable($product['product_name']); ?>"><?php echo escapeTable($product['product_name']); ?></option>
                                 <?php endforeach;
                                 endif; ?>
                             </select>
@@ -92,7 +92,7 @@ if (isset($negativeQuantities)) {
                                 <input value="<?php if (isset($increaseProduct['price'])) : echo escapeTable($increaseProduct['price']);
                                                 endif; ?>" type="text" id="increase_price" name="increase_price" class="form-control text-end" aria-labelledby="yen priceCaution" inputmode="numeric" onblur="increasePrice(this)">
                                 <span class="input-group-text" id="yen">円</span>
-                                <span id="nameCaution" class="form-text ms-2">
+                                <span id="priceCaution" class="form-text ms-2">
                                     <?php if (isset($increaseProduct['list_price'])) : echo '販売定価は' . escapeTable($increaseProduct['list_price']) . '円です。';
                                     endif; ?>
                                 </span>
@@ -150,7 +150,7 @@ if (isset($negativeQuantities)) {
                                     else : echo '商品を選択して下さい';
                                     endif; ?></option>
                                 <?php if (isset($listSelectedProducts)) : foreach ($listSelectedProducts as $listSelectedProduct) : ?>
-                                        <option value="<?php echo $listSelectedProduct['product_id'] . '@' . escapeTable($listSelectedProduct['product_name']); ?>"><?php echo escapeTable($listSelectedProduct['product_name']); ?></option>
+                                        <option value="<?php echo escapeTable($listSelectedProduct['product_id']) . '@' . escapeTable($listSelectedProduct['product_name']); ?>"><?php echo escapeTable($listSelectedProduct['product_name']); ?></option>
                                 <?php endforeach;
                                 endif; ?>
                             </select>
@@ -177,7 +177,7 @@ if (isset($negativeQuantities)) {
                                 <input value="<?php if (isset($editingProduct['price'])) : echo escapeTable($editingProduct['price']);
                                                 endif; ?>" type="text" id="editing_price" name="editing_price" class="form-control text-end" aria-labelledby="yen priceCaution" inputmode="numeric" onblur="editingPrice(this)">
                                 <span class="input-group-text" id="yen">円</span>
-                                <span id="nameCaution" class="form-text ms-2">
+                                <span id="priceCaution" class="form-text ms-2">
                                     <?php if (isset($editingProduct['list_price'])) : echo '販売定価は' . escapeTable($editingProduct['list_price']) . '円です。';
                                     endif; ?>
                                 </span>
@@ -199,7 +199,7 @@ if (isset($negativeQuantities)) {
                                     endif; ?>" type="hidden" name="token">
                     <div class="d-flex d-md-inline-flex mt-4">
                         <div class="me-auto">
-                            <button class="btn btn-success" type="submit" name="tableEditing" onclick="window.onbeforeunload=null">確定</button>
+                            <button class="btn btn-success" type="submit" name="tableEditingUpdate" onclick="window.onbeforeunload=null">確定</button>
                         </div>
                         <div class="ms-md-5">
                             <button class="btn btn-secondary" type="submit" name="tableCancel" onclick="window.onbeforeunload=null">キャンセル</button>
@@ -228,6 +228,8 @@ if (isset($negativeQuantities)) {
     </table>
     <div class="d-flex flex-row-reverse mt-5">
         <form action="/<?= $controllerName; ?>" method="post" onclick="return CheckNegative()">
+            <input value="<?php if (isset($token)) : echo $token;
+                            endif; ?>" type="hidden" name="token">
             <button type="submit" class="btn btn-danger btn-lg" name="tableSubmit">入力完了</button>
         </form>
     </div>

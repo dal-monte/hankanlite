@@ -15,7 +15,7 @@ $mysqli->query('DROP TABLE IF EXISTS suppliers');
 $createTableSql = <<<EOT
 CREATE TABLE IF NOT EXISTS suppliers (
     supplier_id INT NOT NULL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
+    supplier_name VARCHAR(100) NOT NULL,
     index(supplier_id)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4
 EOT;

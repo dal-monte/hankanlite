@@ -64,12 +64,12 @@ $link = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-ico
                         <label for="role" class="col-form-label mt-3">役割</label>
                         <div class="col-auto">
                             <select class="form-select" id="role" name="role" aria-label="Default select example">
-                                <option <?php if (isset($increaseUser['role_name'])) : echo 'value=' . escape($increaseUser['role_id'] . '@' . $increaseUser['role_name']); ?> selected>
+                                <option <?php if (isset($increaseUser['role_id'])) : echo 'value=' . escape($increaseUser['role_id'] . '@' . $increaseUser['role_name']); ?> selected>
                                 <?php echo escape($increaseUser['role_name']);
                                         else : echo 'selected>' . '役割を選択して下さい';
                                         endif; ?></option>
                                 <?php if (isset($roles)) : foreach ($roles as $role) : ?>
-                                        <option value="<?php echo $role['role_id'] . '@' . escape($role['role_name']); ?>"><?php echo escape($role['role_name']); ?></option>
+                                        <option value="<?php echo escape($role['role_id']) . '@' . escape($role['role_name']); ?>"><?php echo escape($role['role_name']); ?></option>
                                 <?php endforeach;
                                 endif; ?>
                             </select>
@@ -121,12 +121,12 @@ $link = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-ico
                             <label for="user_name" class="col-form-label">社員番号 / 社員名</label>
                             <div class="col-auto">
                                 <select class="form-select" aria-label="Default select example" name="user_name" id="user_name">
-                                    <option <?php if (isset($editingUser['name'])) : echo 'value=' . escape($editingUser['user_id']) . '@' . escape($editingUser['name']); ?> selected>
-                                    <?php echo escape($editingUser['name']);
+                                    <option <?php if (isset($editingUser['user_id'])) : echo 'value=' . escape($editingUser['user_id']) . '@' . escape($editingUser['user_name']); ?> selected>
+                                    <?php echo escape($editingUser['user_name']);
                                             else : echo 'selected>' . '社員を選択して下さい';
                                             endif; ?></option>
                                     <?php if (isset($users)) : foreach ($users as $user) : ?>
-                                            <option value="<?php echo $user['user_id'] . '@' . escape($user['name']); ?>"><?php echo escape($user['user_id']) . ' / ' . escape($user['name']); ?></option>
+                                            <option value="<?php echo escape($user['user_id']) . '@' . escape($user['user_name']); ?>"><?php echo escape($user['user_id']) . ' / ' . escape($user['user_name']); ?></option>
                                     <?php endforeach;
                                     endif; ?>
                                 </select>
@@ -160,13 +160,12 @@ $link = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-ico
                             <label for="role" class="col-form-label mt-3">役割</label>
                             <div class="col-auto">
                                 <select class="form-select" aria-label="Default select example" name="role" id="role">
-                                    <option value="<?php if (isset($editingUser['role_id'])) : echo escape($editingUser['role_id'] . '@' . escape($editingUser['role_name']));
-                                                    endif; ?>" selected>
-                                        <?php if (isset($editingUser['role_id'])) :  echo escape($editingUser['role_name']);
-                                        else : echo '役割を選択して下さい';
-                                        endif; ?></option>
+                                    <option <?php if (isset($editingUser['role_id'])) : echo 'value=' . escape($editingUser['role_id'] . '@' . escape($editingUser['role_name'])); ?> selected>
+                                    <?php echo escape($editingUser['role_name']);
+                                            else : echo 'selected>' . '役割を選択して下さい';
+                                            endif; ?></option>
                                     <?php if (isset($roles)) : foreach ($roles as $role) : ?>
-                                            <option value="<?php echo $role['role_id'] . '@' . escape($role['role_name']); ?>"><?php echo escape($role['role_name']); ?></option>
+                                            <option value="<?php echo escape($role['role_id']) . '@' . escape($role['role_name']); ?>"><?php echo escape($role['role_name']); ?></option>
                                     <?php endforeach;
                                     endif; ?>
                                 </select>

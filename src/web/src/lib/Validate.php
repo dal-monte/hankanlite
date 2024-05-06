@@ -7,8 +7,6 @@ class Validate
 
         if (isset($category['category_name'])) {
             $categoryName = $category['category_name'];
-        } elseif (isset($category['name'])) {
-            $categoryName = $category['name'];
         }
 
         if (isset($categoryName)) {
@@ -27,12 +25,20 @@ class Validate
         $update = $action === 'update';
         $select = $action === 'select';
         $delete = $action === 'delete';
-        $increaseOrUpdate = $increase || $update;
         $selectOrDelete = $select || $delete;
 
-        if ($listExist && $increaseOrUpdate) {
+        if ($listExist && $increase) {
             foreach ($listCategories as $listCategory) {
-                $duplicationName = $categoryName === $listCategory['name'];
+                $duplicationName = $categoryName === $listCategory['category_name'];
+                if ($duplicationName) {
+                    $errors['category_name'] = 'すでに同名のカテゴリーが存在します※重複できません';
+                }
+            }
+        }
+
+        if ($listExist && $update) {
+            foreach ($listCategories as $listCategory) {
+                $duplicationName = $categoryName === $listCategory['category_name'];
                 $notSameId = $category['category_id'] !== $listCategory['category_id'];
                 if ($duplicationName && $notSameId) {
                     $errors['category_name'] = 'すでに同名のカテゴリーが存在します※重複できません';
@@ -63,8 +69,6 @@ class Validate
 
         if (isset($product['product_name'])) {
             $productName = $product['product_name'];
-        } elseif (isset($product['name'])) {
-            $productName = $product['name'];
         }
 
         if (isset($productName)) {
@@ -86,12 +90,10 @@ class Validate
         }
 
         if (isset($checkPrice)) {
-            if (!strlen($checkPrice)) {
+            if ($checkPrice === 0) {
                 $errors['price'] = $priceType . 'を入力してください';
             } elseif (!filter_var($checkPrice, FILTER_VALIDATE_INT)) {
                 $errors['price'] = $priceType . 'は半角数字のみで入力して下さい';
-            } elseif ($checkPrice === 0) {
-                $errors['price'] = $priceType . 'を入力してください';
             } elseif (mb_strlen($checkPrice) > 13) {
                 $errors['price'] = $priceType . 'は1京円以上は非対応です';
             } elseif ($checkPrice < 0) {
@@ -118,13 +120,23 @@ class Validate
         $update = $action === 'update';
         $select = $action === 'select';
         $delete = $action === 'delete';
-        $increaseOrUpdate = $increase || $update;
         $selectOrDelete = $select || $delete;
 
-        if ($listExist && $increaseOrUpdate) {
+        if ($listExist && $increase) {
             foreach ($listProducts as $listProduct) {
-                if (in_array($productName, $listProduct)) {
-                    $errors['product_name'] = 'すでに同名の商品が存在します※重複できません';
+                $duplicationName = $productName === $listProduct['product_name'];
+                if ($duplicationName) {
+                    $errors['product_name'] = 'すでに同名のカテゴリーが存在します※重複できません';
+                }
+            }
+        }
+
+        if ($listExist && $update) {
+            foreach ($listProducts as $listProduct) {
+                $duplicationName = $productName === $listProduct['product_name'];
+                $notSameId = $product['product_id'] !== $listProduct['product_id'];
+                if ($duplicationName && $notSameId) {
+                    $errors['product_name'] = 'すでに同名のカテゴリーが存在します※重複できません';
                 }
             }
         }
@@ -162,8 +174,6 @@ class Validate
 
         if (isset($customer['customer_name'])) {
             $customerName = $customer['customer_name'];
-        } elseif (isset($customer['name'])) {
-            $customerName = $customer['name'];
         }
 
         if (isset($customerName)) {
@@ -222,8 +232,6 @@ class Validate
 
         if (isset($supplier['supplier_name'])) {
             $supplierName = $supplier['supplier_name'];
-        } elseif (isset($supplier['name'])) {
-            $supplierName = $supplier['name'];
         }
 
         if (isset($supplierName)) {
@@ -367,8 +375,6 @@ class Validate
 
         if (isset($user['user_name'])) {
             $userName = $user['user_name'];
-        } elseif (isset($user['name'])) {
-            $userName = $user['name'];
         }
 
         if (isset($userName)) {

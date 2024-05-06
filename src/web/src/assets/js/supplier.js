@@ -5,7 +5,7 @@ $(document).ready(function () {
     data: "supplier_id"
   }, {
     title: "業者名",
-    data: "name"
+    data: "supplier_name"
   }
   ];
 

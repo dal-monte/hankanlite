@@ -4,7 +4,7 @@ class SalesContract extends DatabaseModel
 {
     public function fetchAllSalesContract()
     {
-        return $this->fetchAll("SELECT DATE_FORMAT(CONVERT_TZ(sc.created_at,'+00:00','+09:00'), '%Y年%m月%d日') AS created_at, sc.sales_contract_id, sc.customer_id, s.name AS customer_name FROM sales_contracts AS sc JOIN customers AS s ON sc.customer_id = s.customer_id");
+        return $this->fetchAll("SELECT DATE_FORMAT(CONVERT_TZ(sc.created_at,'+00:00','+09:00'), '%Y年%m月%d日') AS created_at, sc.sales_contract_id, sc.customer_id, c.customer_name FROM sales_contracts AS sc JOIN customers AS c ON sc.customer_id = c.customer_id");
     }
 
     public function insert($contract)

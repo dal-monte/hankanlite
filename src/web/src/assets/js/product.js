@@ -5,7 +5,7 @@ $(document).ready(function () {
     data: "category_name"
   }, {
     title: "商品名",
-    data: "name"
+    data: "product_name"
   }, {
     title: "定価",
     data: "list_price"

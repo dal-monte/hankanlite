@@ -1,57 +1,47 @@
+## このアプリについて
+
+企業でよく使用されている販売管理システムのようなものを、PHPの勉強の集大成として5ヶ月かけて作成したものです。
+
+山浦清透氏が運営する「独学エンジニア」の最終レッスン（Lesson45）「オリジナルレッスンアプリを作ろう」の成果物として、
+独学エンジニアのレッスンを通じて得た知識を元に設計しました。
+
+構成としては、
+・Lesson44の「PHPでシャッフルランチサービスを作ろう」で作成したPHPのフルスクラッチMVCモデルとDockerfileをベースとして、
+・データベースにMYSQL
+・画面表示にX社のBootstrap5
+・MYSQL等のログイン情報保管に.env
+を使用しています。
+
+本アプリ作成の狙いは、
+・Webアプリケーションの仕組みの理解
+・オブジェクト指向に慣れる
+・自走力の獲得
+です。
+
+
 ## 環境構築
 
-```bash
-# Docker イメージのビルド
-docker-compose build
+Dockerが存在するPCのディレクトリに本コードを保存し、
+PHPのComposerをDockerファイルに導入し、
+SQLデータのCREATE、INSERTを行うとブラウザのローカルホストで動作を確認できます。
 
-# Docker コンテナの起動
-docker-compose up -d
+使用するローカルホストのナンバーは[localhost:50080]です。
+既にそのナンバーを使用中の場合は使用できません。
 
-# Docker コンテナ内でコマンドを実行する
-docker-compose exec app php -v
 
-# Docker コンテナの停止・削除
-docker-compose down
-```
+保存したディレクトリ直下で下記コードを入力して環境構築して下さい。
 
-## 環境構築 (Remote Development編)
-
-Docker イメージをビルドする。
-
+・Docker イメージをビルドする。
 ```bash
 docker-compose build
 ```
 
-VSCode の Remote-Containers: Open Folder in Container からコンテナを開く。
-
-コマンドは VSCode のターミナルから実行する。
-
-終了するときはコンテナを停止・削除する。
-
+・Composer(PHP)を導入する。
 ```bash
-docker-compose down
+docker-compose exec app composer install
 ```
 
-### デバッグ (Xdebug)
-
-デバッグしたい時は下記の順に実施する。
-
-1. コードにブレークポイントを設定する
-2. デバッグビューを開く
-3. 「Listen for Xdebug」を選択してデバッグを開始する
-4. コードを実行する
-
-ブレークポイントで止まらない場合、 `.vscode/launch.json` の port が 9003 であることを確認する。
-
-## 静的解析
-
-VSCode のターミナル上で下記コマンドを実行する（Remote Development で開発している場合）。
-
+・SQLデータの作成。
 ```bash
-# PHPStan でコードのバグを検知する
-composer phpstan
-
-# PHP_CodeSniffer でコーディング規約に準拠していないコードを検知する
-composer phpcs
+docker-compose exec app php web/sql_data/all_table_set.php
 ```
-# hankanlite

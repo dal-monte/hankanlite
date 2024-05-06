@@ -81,13 +81,13 @@ $link = '
                             <label for="category_name" class="col-form-label">商品カテゴリー名</label>
                             <div class="col-auto">
                                 <select class="form-select" aria-label="Default select example" id="category_name" name="category_name">
-                                    <option <?php if (isset($editingCategory['name'])) : echo 'value=' . escape($editingCategory['category_id']) . "@" . escape($editingCategory['name']);
+                                    <option <?php if (isset($editingCategory['category_id'])) : echo 'value=' . escape($editingCategory['category_id']) . "@" . escape($editingCategory['category_name']);
                                             ?> selected>
-                                    <?php echo escape($editingCategory['name']);
+                                    <?php echo escape($editingCategory['category_name']);
                                             else : echo 'selected>' . 'カテゴリー名を選択して下さい';
                                             endif; ?></option>
                                     <?php if (isset($categories)) : foreach ($categories as $category) : ?>
-                                            <option value="<?php echo $category['category_id'] . '@' . escape($category['name']); ?>"><?php echo escape($category['name']); ?></option>
+                                            <option value="<?php echo escape($category['category_id']) . '@' . escape($category['category_name']); ?>"><?php echo escape($category['category_name']); ?></option>
                                     <?php endforeach;
                                     endif; ?>
                                 </select>

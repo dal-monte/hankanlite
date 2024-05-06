@@ -90,12 +90,12 @@ $link = '
                             <label for="customer_name" class="col-form-label">ID / 顧客名</label>
                             <div class="col-auto">
                                 <select class="form-select" aria-label="Default select example" id="customer_name" name="customer_name">
-                                    <option <?php if (isset($editingCustomer['name'])) : echo escape($editingCustomer['customer_id']) . '@' .  escape($editingCustomer['name']); ?> selected>
-                                    <?php echo escape($editingCustomer['customer_id']) . ' / ' .  escape($editingCustomer['name']);
+                                    <option <?php if (isset($editingCustomer['customer_id'])) : echo 'value=' .  escape($editingCustomer['customer_id']) . '@' .  escape($editingCustomer['customer_name']); ?> selected>
+                                    <?php echo escape($editingCustomer['customer_id']) . ' / ' .  escape($editingCustomer['customer_name']);
                                             else : echo 'selected>' . '顧客を選択して下さい';
                                             endif; ?></option>
                                     <?php if (isset($customers)) : foreach ($customers as $customer) : ?>
-                                            <option value="<?php echo $customer['customer_id'] . '@' . escape($customer['name']); ?>"><?php echo escape($customer['customer_id']) . ' / ' . escape($customer['name']); ?></option>
+                                            <option value="<?php echo escape($customer['customer_id']) . '@' . escape($customer['customer_name']); ?>"><?php echo escape($customer['customer_id']) . ' / ' . escape($customer['customer_name']); ?></option>
                                     <?php endforeach;
                                     endif; ?>
                                 </select>

@@ -2,7 +2,7 @@ $(document).ready(function () {
 
   var columns = [{
     title: "カテゴリー",
-    data: "name"
+    data: "category_name"
   }
   ];
 

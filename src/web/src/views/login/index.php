@@ -6,7 +6,7 @@ $link = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-ico
 ?>
 
 <div class="container-fluid d-flex justify-content-center text-center" style="height: 100%;">
-    <form action="/check" id="Signup form" method="post">
+    <form action="/check" id="login form" method="post">
         <div class="row justify-content-center align-content-center" style="height: 100%;">
             <div class="bg-light border border-1 rounded">
                 <div class="container mt-3 mb-3">
@@ -47,7 +47,7 @@ $link = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-ico
     <script src="https://www.google.com/recaptcha/api.js"></script>
     <script>
         function reCaptchaCallbackSubmit(token) {
-            document.getElementById("Signup form").submit();
+            document.getElementById("login form").submit();
         }
     </script>
 <?php endif; ?>

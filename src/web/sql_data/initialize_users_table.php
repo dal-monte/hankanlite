@@ -17,7 +17,7 @@ $mysqli->query('DROP TABLE IF EXISTS users');
 $createTableSql = <<<EOT
 CREATE TABLE IF NOT EXISTS users (
     user_id INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
+    user_name VARCHAR(100) NOT NULL,
     password VARCHAR(255) NOT NULL,
     role_id INT NOT NULL,
     index(role_id),

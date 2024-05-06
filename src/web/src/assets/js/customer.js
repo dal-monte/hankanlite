@@ -5,7 +5,7 @@ $(document).ready(function () {
     data: "customer_id"
   }, {
     title: "顧客名",
-    data: "name"
+    data: "customer_name"
   }
   ];
 

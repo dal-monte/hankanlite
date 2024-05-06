@@ -1,23 +1,12 @@
 <?php
 
-$errors = [];
-
 class UserController extends Controller
 {
     public function index()
     {
-        $navbar = $this->navbar;
-        $role = "not";
-
         session_start();
-        $token = $this->createToken();
 
-        if (isset($_SESSION["role"])) {
-            $role = $_SESSION["role"];
-        }
-        if (!in_array("users", $navbar[$role])) {
-            throw new HttpNotFoundException();
-        }
+        $token = $this->securityCheck("users");
 
         if (isset($_SESSION['user_id'])) {
             unset($_SESSION['user_id']);
@@ -45,24 +34,12 @@ class UserController extends Controller
 
     public function increase()
     {
-        if (!$this->request->isPost()) {
-            throw new HttpNotFoundException();
-        }
+        session_start();
+
+        $token = $this->securityCheck("users");
 
         $errors['increase'] = [];
 
-        $navbar = $this->navbar;
-        $role = "not";
-
-        session_start();
-        $token = $this->judgeToken();
-
-        if (isset($_SESSION["role"])) {
-            $role = $_SESSION["role"];
-        }
-        if (!in_array("users", $navbar[$role])) {
-            throw new HttpNotFoundException();
-        }
 
         if (isset($_SESSION['user_id'])) {
             unset($_SESSION['user_id']);
@@ -140,30 +117,15 @@ class UserController extends Controller
 
     public function editing()
     {
-        if (!$this->request->isPost()) {
-            throw new HttpNotFoundException();
-        }
-
-        $errors['editing'] = [];
-
-        $navbar = $this->navbar;
-        $role = "not";
-
         session_start();
-        $token = $this->judgeToken();
 
-        if (isset($_SESSION["role"])) {
-            $role = $_SESSION["role"];
-        }
-        if (!in_array("users", $navbar[$role])) {
-            throw new HttpNotFoundException();
-        }
+        $token = $this->securityCheck("users");
 
         // modelsディレクトリのUserクラスをnewして$sqlUserに渡す
         $sqlUsers = $this->databaseManager->get('User');
 
         if (isset($_POST['user_name'])) {
-            $user['user_name'] = trim($_POST['user_name']);
+            $postUser['user_name'] = trim($_POST['user_name']);
         } else {
             throw new HttpNotFoundException();
         }
@@ -179,97 +141,17 @@ class UserController extends Controller
         $editingFieldset = 'disabled';
         $selectFieldset = '';
         if (isset($_POST['select'])) {
-            $editingSession = 'show';
-            if (strpos($user['user_name'], '@')) {
-                $user['user_id'] = strstr($user['user_name'], '@', true);
-                $user['name'] = substr(strstr($user['user_name'], '@', false), 1);
-                $errors['editing'] = $errors['editing'] + $this->validate->userValidate($user, $listUsers, 'select');
-            } else {
-                $errors['editing']['user_name'] = '選択肢から選んでください';
-            }
-
-            if (isset($user['user_id'])) {
-                foreach ($listUsers as $listUser) {
-                    if ($user['user_id'] === $listUser['user_id']) {
-                        $user['role_id'] = $listUser['role_id'];
-                        $user['role_name'] = $listUser['role'];
-                    }
-                }
-            }
-
-            if (!count($errors['editing'])) {
-                $user['user_name'] = $user['name'];
-                $_SESSION['user_id'] = $user['user_id'];
-                $_SESSION['user_name'] = $user['name'];
-                $editingFieldset = '';
-                $selectFieldset = 'disabled';
-            } else {
-                $user = [];
-            }
+            $editingSelect = $this->editingSelect($postUser, $listUsers);
+            extract($editingSelect);
         } elseif (isset($_POST['update'])) {
-            if (isset($_SESSION['user_id'])) {
-                $user['user_id'] = $_SESSION['user_id'];
-            } else {
-                throw new HttpNotFoundException();
-            }
-
-            if (isset($_POST['role'])) {
-                $user['role'] = $_POST['role'];
-            } else {
-                throw new HttpNotFoundException();
-            }
-
-            if (strpos($user['role'], '@')) {
-                $user['role_id'] = strstr($user['role'], '@', true);
-                $user['role_name'] = substr(strstr($user['role'], '@', false), 1);
-                $errors['editing'] = $errors['editing'] + $this->validate->roleValidate($user, $listRoles);
-            } else {
-                $errors['editing']['role'] = '役割は選択肢から選んでください';
-            }
-
-            $errors['editing'] = $errors['editing'] + $this->validate->userValidate($user, $listUsers, 'update');
-            if (!count($errors['editing'])) {
-                $sqlUsers->update($user);
-                $user = [];
-                unset($_SESSION['user_name']);
-                unset($_SESSION['user_id']);
-                $listUser = $sqlUsers->fetchUser();
-                $this->convert->convertJson($listUser, 'user');
-            } else {
-                $user['name'] = $_SESSION['user_name'];
-                $editingSession = 'show';
-                $editingFieldset = '';
-                $selectFieldset = 'disabled';
-            }
+            $editingUpdate = $this->editingUpdate($sqlUsers, $listRoles, $listUsers);
+            extract($editingUpdate);
         } elseif (isset($_POST['delete'])) {
-            if (strpos($user['user_name'], '@')) {
-                $user['user_id'] = strstr($user['user_name'], '@', true);
-                $user['name'] = substr(strstr($user['user_name'], '@', false), 1);
-                $errors['editing'] = $errors['editing'] + $this->validate->userValidate($user, $listUsers, 'delete');
-            } else {
-                $errors['editing']['user_name'] = '選択肢から選んでください';
-            }
-
-            if (!count($errors['editing'])) {
-                $user['user_name'] = $user['name'];
-                $sqlUsers->delete($user);
-                $listUsers = $sqlUsers->fetchUser();
-                $this->convert->convertJson($listUsers, 'user');
-                $user = [];
-            } else {
-                $editingSession = 'show';
-                $editingFieldset = 'disabled';
-                $selectFieldset = '';
-                $user = [];
-            }
+            $editingDelete = $this->editingDelete($postUser, $listUsers, $sqlUsers);
+            extract($editingDelete);
         } else {
-            $user = [];
-            if (isset($_SESSION['user_id'])) {
-                unset($_SESSION['user_id']);
-            }
-            if (isset($_SESSION['user_name'])) {
-                unset($_SESSION['user_name']);
-            }
+            $editingElse = $this->editingElse();
+            extract($editingElse);
         }
 
         return $this->render([
@@ -283,5 +165,162 @@ class UserController extends Controller
             'selectFieldset' => $selectFieldset,
             'token' => $token,
         ], 'index');
+    }
+
+    private function editingSelect($postUser, $listUsers)
+    {
+        $editingSession = '';
+        $editingFieldset = 'disabled';
+        $selectFieldset = '';
+        $errors['editing'] = [];
+
+        $editingSession = 'show';
+        if (strpos($postUser['user_name'], '@')) {
+            $user['user_id'] = strstr($postUser['user_name'], '@', true);
+            $user['name'] = substr(strstr($postUser['user_name'], '@', false), 1);
+            $errors['editing'] = $errors['editing'] + $this->validate->userValidate($user, $listUsers, 'select');
+        } else {
+            $errors['editing']['user_name'] = '選択肢から選んでください';
+        }
+
+        if (isset($user['user_id'])) {
+            foreach ($listUsers as $listUser) {
+                if ($user['user_id'] === $listUser['user_id']) {
+                    $user['role_id'] = $listUser['role_id'];
+                    $user['role_name'] = $listUser['role'];
+                }
+            }
+        }
+
+        if (!count($errors['editing'])) {
+            $user['user_name'] = $user['name'];
+            $_SESSION['user_id'] = $user['user_id'];
+            $_SESSION['user_name'] = $user['name'];
+            $editingFieldset = '';
+            $selectFieldset = 'disabled';
+        } else {
+            $user = [];
+        }
+
+        return [
+            'editingSession' => $editingSession,
+            'editingFieldset' => $editingFieldset,
+            'selectFieldset' => $selectFieldset,
+            'user' => $user,
+            'errors' => $errors,
+        ];
+    }
+
+    private function editingUpdate($sqlUsers, $listRoles, $listUsers)
+    {
+        $editingSession = '';
+        $editingFieldset = 'disabled';
+        $selectFieldset = '';
+        $errors['editing'] = [];
+
+        if (isset($_SESSION['user_id'])) {
+            $user['user_id'] = $_SESSION['user_id'];
+        } else {
+            throw new HttpNotFoundException();
+        }
+
+        if (isset($_POST['role'])) {
+            $postUser['role'] = $_POST['role'];
+        } else {
+            throw new HttpNotFoundException();
+        }
+
+        if (strpos($postUser['role'], '@')) {
+            $user['role_id'] = strstr($postUser['role'], '@', true);
+            $user['role_name'] = substr(strstr($postUser['role'], '@', false), 1);
+            $errors['editing'] = $errors['editing'] + $this->validate->roleValidate($user, $listRoles);
+        } else {
+            $errors['editing']['role'] = '役割は選択肢から選んでください';
+        }
+
+        $errors['editing'] = $errors['editing'] + $this->validate->userValidate($user, $listUsers, 'update');
+        if (!count($errors['editing'])) {
+            $sqlUsers->update($user);
+            $user = [];
+            unset($_SESSION['user_name']);
+            unset($_SESSION['user_id']);
+            $listUsers = $sqlUsers->fetchUser();
+            $this->convert->convertJson($listUsers, 'user');
+        } else {
+            $user['name'] = $_SESSION['user_name'];
+            $editingSession = 'show';
+            $editingFieldset = '';
+            $selectFieldset = 'disabled';
+        }
+        return [
+            'editingSession' => $editingSession,
+            'editingFieldset' => $editingFieldset,
+            'selectFieldset' => $selectFieldset,
+            'user' => $user,
+            'listUsers' => $listUsers,
+            'errors' => $errors,
+        ];
+    }
+
+    private function editingDelete($postUser, $listUsers, $sqlUsers)
+    {
+        $editingSession = '';
+        $editingFieldset = 'disabled';
+        $selectFieldset = '';
+        $errors['editing'] = [];
+
+        if (strpos($postUser['user_name'], '@')) {
+            $user['user_id'] = strstr($postUser['user_name'], '@', true);
+            $user['name'] = substr(strstr($postUser['user_name'], '@', false), 1);
+            $errors['editing'] = $errors['editing'] + $this->validate->userValidate($user, $listUsers, 'delete');
+        } else {
+            $errors['editing']['user_name'] = '選択肢から選んでください';
+        }
+
+        if (!count($errors['editing'])) {
+            $user['user_name'] = $user['name'];
+            $sqlUsers->delete($user);
+            $listUsers = $sqlUsers->fetchUser();
+            $this->convert->convertJson($listUsers, 'user');
+            $user = [];
+        } else {
+            $editingSession = 'show';
+            $editingFieldset = 'disabled';
+            $selectFieldset = '';
+            $user = [];
+        }
+
+        return [
+            'editingSession' => $editingSession,
+            'editingFieldset' => $editingFieldset,
+            'selectFieldset' => $selectFieldset,
+            'user' => $user,
+            'listUsers' => $listUsers,
+            'errors' => $errors,
+        ];
+    }
+
+    private function editingElse()
+    {
+        $editingSession = '';
+        $editingFieldset = 'disabled';
+        $selectFieldset = '';
+        $errors['editing'] = [];
+
+        $user = [];
+        if (isset($_SESSION['user_id'])) {
+            unset($_SESSION['user_id']);
+        }
+        if (isset($_SESSION['user_name'])) {
+            unset($_SESSION['user_name']);
+        }
+
+        return [
+            'editingSession' => $editingSession,
+            'editingFieldset' => $editingFieldset,
+            'selectFieldset' => $selectFieldset,
+            'user' => $user,
+            'errors' => $errors,
+        ];
     }
 }

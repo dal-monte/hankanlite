@@ -49,12 +49,12 @@ $link = '
                             <label for="category_name" class="col-form-label mt-3">カテゴリー名</label>
                             <div class="col-auto">
                                 <select class="form-select" aria-label="Default select example" name="category_name" id="category_name">
-                                    <option <?php if (isset($increaseProduct['category_name'])) : echo 'value=' . escape($increaseProduct['category_id']) . '@' .  escape($increaseProduct['category_name']); ?> selected>
+                                    <option <?php if (isset($increaseProduct['category_id'])) : echo 'value=' . escape($increaseProduct['category_id']) . '@' .  escape($increaseProduct['category_name']); ?> selected>
                                     <?php echo escape($increaseProduct['category_name']);
                                             else : echo 'selected>' . 'カテゴリー名を選択して下さい';
                                             endif; ?></option>
                                     <?php foreach ($categories as $category) : ?>
-                                        <option value="<?php echo escape($category['category_id']) . '@' . escape($category['name']); ?>"><?php echo escape($category['name']); ?></option>
+                                        <option value="<?php echo escape($category['category_id']) . '@' . escape($category['category_name']); ?>"><?php echo escape($category['category_name']); ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -104,6 +104,40 @@ $link = '
                     </ul>
                 <?php endif; ?>
 
+
+                <form action="/product/editing" method="post">
+                    <fieldset <?php if (isset($searchFieldset)) : echo $searchFieldset;
+                                endif; ?>>
+                        <div class="row mt-3">
+                            <label for="category_name" class="col-form-label">カテゴリー</label>
+                            <div class="col-auto">
+                                <select class="form-select" name="category_name" id="category_name" aria-label="Default select example" aria-labelledby="productCaution">
+                                    <option <?php if (isset($editingProduct['category_id'])) : echo 'value=' . escape($editingProduct['category_id']) . '@' . escape($editingProduct['category_name']);
+                                            ?> selected>
+                                    <?php echo escape($editingProduct['category_name']);
+                                            else : echo 'selected>' . 'カテゴリーを選択して下さい';
+                                            endif; ?></option>
+                                    <?php if (isset($usedCategories)) : foreach ($usedCategories as $category) : ?>
+                                            <option value="<?php echo escape($category['category_id']) . '@' . escape($category['category_name']); ?>"><?php echo escape($category['category_name']); ?></option>
+                                    <?php endforeach;
+                                    endif; ?>
+                                </select>
+                            </div>
+                            <input value="<?php if (isset($token)) : echo $token;
+                                            endif; ?>" type="hidden" name="token">
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-secondary" name="search">検索</button>
+                            </div>
+                            <div class="col-auto">
+                                <span id="productCaution" class="form-text">
+                                    直接商品を選択するか、カテゴリーから商品を検索して下さい
+                                </span>
+                            </div>
+                        </div>
+                    </fieldset>
+                </form>
+
+
                 <form action="/product/editing" method="post">
                     <fieldset <?php if (isset($selectFieldset)) : echo $selectFieldset;
                                 endif; ?>>
@@ -111,12 +145,12 @@ $link = '
                             <label for="product_name" class="col-form-label">商品</label>
                             <div class="col-auto">
                                 <select class="form-select" aria-label="Default select example" id="product_name" name="product_name">
-                                    <option <?php if (isset($editingProduct['name'])) : echo 'value=' . escape($editingProduct['product_id']) . "@" . escape($editingProduct['name']); ?> selected>
-                                    <?php echo escape($editingProduct['name']);
+                                    <option <?php if (isset($editingProduct['product_id'])) : echo 'value=' . escape($editingProduct['product_id']) . "@" . escape($editingProduct['product_name']); ?> selected>
+                                    <?php echo escape($editingProduct['product_name']);
                                             else : echo 'selected>' . '商品を選択して下さい';
                                             endif; ?></option>
                                     <?php if (isset($products)) : foreach ($products as $product) : ?>
-                                            <option value="<?php echo escape($product['product_id']) . '@' . escape($product['name']); ?>"><?php echo escape($product['name']); ?></option>
+                                            <option value="<?php echo escape($product['product_id']) . '@' . escape($product['product_name']); ?>"><?php echo escape($product['product_name']); ?></option>
                                     <?php endforeach;
                                     endif; ?>
                                 </select>
@@ -140,13 +174,13 @@ $link = '
                             <label for="category_name" class="col-form-label mt-3">新規カテゴリー</label>
                             <div class="col-auto">
                                 <select class="form-select" aria-label="Default select example" id="category_name" name="category_name">
-                                    <option <?php if (isset($editingProduct['category_name'])) : echo 'value=' . $editingProduct['category_id'] . '@' . escape($editingProduct['category_name']);
+                                    <option <?php if (isset($editingProduct['category_id'])) : echo 'value=' . $editingProduct['category_id'] . '@' . escape($editingProduct['category_name']);
                                             ?> selected>
                                     <?php echo escape($editingProduct['category_name']);
                                             else : echo 'selected>' . '';
                                             endif; ?></option>
                                     <?php if (isset($categories)) : foreach ($categories as $category) : ?>
-                                            <option value="<?php echo $category['category_id'] . '@' . escape($category['name']); ?>"><?php echo escape($category['name']); ?></option>
+                                            <option value="<?php echo escape($category['category_id']) . '@' . escape($category['category_name']); ?>"><?php echo escape($category['category_name']); ?></option>
                                         <?php endforeach; ?>
                                     <?php endif; ?>
                                 </select>

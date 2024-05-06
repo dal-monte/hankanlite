@@ -51,13 +51,12 @@ $link = '
                             <label for="supplier_name" class="col-form-label mt-3">ID / 業者名</label>
                             <div class="col-auto">
                                 <select class="form-select" aria-label="Default select example" id="supplier_name" name="supplier_name">
-                                    <option value="<?php if (isset($increaseContract['supplier_name'])) echo $increaseContract['supplier_id'] . '@' . escape($increaseContract['supplier_name']); ?>" selected>
-                                        <?php if (isset($increaseContract['name'])) :  echo escape($increaseContract['name']) . ' / ' . escape($increaseContract['supplier_id']);
-                                        elseif (isset($increaseContract['supplier_name'])) : echo escape($increaseContract['supplier_name']) . ' / ' . escape($increaseContract['supplier_id']);
-                                        else : echo '業者を選択して下さい';
-                                        endif; ?></option>
+                                    <option <?php if (isset($increaseContract['supplier_id'])) : echo 'value=' .  $increaseContract['supplier_id'] . '@' . escape($increaseContract['supplier_name']); ?> selected>
+                                    <?php echo escape($increaseContract['supplier_name']) . ' / ' . escape($increaseContract['supplier_id']);
+                                            else : echo 'selected>' . '業者を選択して下さい';
+                                            endif; ?></option>
                                     <?php if (isset($suppliers)) : foreach ($suppliers as $supplier) : ?>
-                                            <option value="<?php echo $supplier['supplier_id'] . '@' . escape($supplier['name']); ?>"><?php echo escape($supplier['supplier_id']) . ' / ' . escape($supplier['name']); ?></option>
+                                            <option value="<?php echo escape($supplier['supplier_id']) . '@' . escape($supplier['supplier_name']); ?>"><?php echo escape($supplier['supplier_id']) . ' / ' . escape($supplier['supplier_name']); ?></option>
                                     <?php endforeach;
                                     endif; ?>
                                 </select>
@@ -108,12 +107,12 @@ $link = '
                             <label for="supplier_name" class="col-form-label">業者名</label>
                             <div class="col-auto">
                                 <select class="form-select" aria-label="Default select example" id="supplier_name" name="supplier_name">
-                                    <option value="<?php if (isset($editingContract['supplier_name'])) echo $editingContract['supplier_id'] . '@' . escape($editingContract['supplier_name']); ?>" selected>
-                                        <?php if (isset($editingContract['supplier_name'])) : echo escape($editingContract['supplier_name']) . ' / ' . escape($editingContract['supplier_id']);
-                                        else : echo '業者を選択して下さい';
-                                        endif; ?></option>
+                                    <option <?php if (isset($editingContract['supplier_id'])) : echo  'value=' . escape($editingContract['supplier_id']) . '@' . escape($editingContract['supplier_name']); ?> selected>
+                                    <?php echo escape($editingContract['supplier_name']) . ' / ' . escape($editingContract['supplier_id']);
+                                            else : echo 'selected>' . '業者を選択して下さい';
+                                            endif; ?></option>
                                     <?php if (isset($suppliers)) : foreach ($suppliers as $supplier) : ?>
-                                            <option value="<?php echo $supplier['supplier_id'] . '@' . escape($supplier['name']); ?>"><?php echo escape($supplier['supplier_id']) . ' / ' . escape($supplier['name']); ?></option>
+                                            <option value="<?php echo escape($supplier['supplier_id']) . '@' . escape($supplier['supplier_name']); ?>"><?php echo escape($supplier['supplier_id']) . ' / ' . escape($supplier['supplier_name']); ?></option>
                                     <?php endforeach;
                                     endif; ?>
                                 </select>
@@ -134,10 +133,10 @@ $link = '
                             <label id="contract_id" class="col-form-label">契約番号</label>
                             <div class="col-auto">
                                 <select class="form-select" aria-label="Default select example" name="contract_id" id="contract_id">
-                                    <option value="<?php if (isset($editingContract['contract_id'])) echo escape($editingContract['contract_id']); ?>" selected>
-                                        <?php if (isset($editingContract['contract_id'])) : echo escape($editingContract['contract_id']);
-                                        else : echo '契約番号を選択して下さい';
-                                        endif; ?></option>
+                                    <option <?php if (isset($editingContract['contract_id'])) : echo 'value=' . escape($editingContract['contract_id']); ?> selected>
+                                    <?php echo escape($editingContract['contract_id']);
+                                            else : echo 'selected>' . '契約番号を選択して下さい';
+                                            endif; ?></option>
                                     <?php if (isset($contracts)) : foreach ($contracts as $contract) : ?>
                                             <option value="<?php echo escape($contract['purchase_contract_id']); ?>"><?php echo escape($contract['purchase_contract_id']); ?></option>
                                     <?php endforeach;

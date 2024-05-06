@@ -1,7 +1,5 @@
 <?php
 
-$errors = [];
-
 class LoginController extends Controller
 {
     protected $noPage = 'class="nav-link"';
@@ -55,12 +53,16 @@ class LoginController extends Controller
 
         if (is_null($serverUser)) {
             $errors['login'] = '社員番号とパスワードが一致しません';
+            $view = "index";
+            $serverUser["role"] = 'not';
+            $serverUser["user_id"] = '';
+            $serverUser["user_name"] = '';
         } else {
             if (password_verify($user["password"], $serverUser["password"])) {
                 session_start();
                 session_regenerate_id(true); // セッションIDをふりなおす(IDを盗まれないために)
                 $_SESSION["now_user_id"] = $serverUser["user_id"];
-                $_SESSION["now_user_name"] = $serverUser["name"];
+                $_SESSION["now_user_name"] = $serverUser["user_name"];
                 $_SESSION["role"] = $serverUser["role"];
                 $view = "../menu/products";
             } else {
@@ -68,7 +70,7 @@ class LoginController extends Controller
                 $view = "index";
                 $serverUser["role"] = 'not';
                 $serverUser["user_id"] = '';
-                $serverUser["name"] = '';
+                $serverUser["user_name"] = '';
             }
         }
 
@@ -78,7 +80,7 @@ class LoginController extends Controller
             'noPage' => $noPage,
             'navbar' => $navbar[$serverUser["role"]],
             'userId' => $serverUser["user_id"],
-            'userName' => $serverUser["name"],
+            'userName' => $serverUser["user_name"],
             'productsNow' => $currentPage,
             'reCaptchaKey' => $reCaptchaKey,
         ], $view);
