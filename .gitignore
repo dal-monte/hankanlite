@@ -1,2 +1,11 @@
 docker/db/mysql_data
 src/vendor
+src/assets/json/category.json
+src/assets/json/customer.json
+src/assets/json/product.json
+src/assets/json/purchaseContract.json
+src/assets/json/purchaseProduct.json
+src/assets/json/salesContract.json
+src/assets/json/salesProduct.json
+src/assets/json/supplier.json
+src/assets/json/user.json
