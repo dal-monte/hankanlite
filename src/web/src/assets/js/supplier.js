@@ -20,7 +20,7 @@ $(document).ready(function () {
     ajax: '/src/assets/json/supplier.json',
     columns: columns,
     columnDefs: [
-      { targets: 0, render: $.fn.dataTable.render.text() },    //XSS対策
+      { targets: [0, 1], render: $.fn.dataTable.render.text() },    //XSS対策
       { targets: 0, className: 'dt-center' }
     ]
   });

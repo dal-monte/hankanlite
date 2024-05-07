@@ -71,7 +71,6 @@ class Controller
 
     protected function securityCheck($navElement, $fromNavbar = null)
     {
-        $token = $this->token->token();
         $navbar = $this->navbar;
         $role = "not";
 
