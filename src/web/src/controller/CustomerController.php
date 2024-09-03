@@ -223,7 +223,7 @@ class CustomerController extends Controller
             $busyCustomer = $sqlProduct->searchProducts($customer['customer_id']);
             $boolBusyCustomer = !is_null($busyCustomer);
             if ($boolBusyCustomer) {
-                $errors['editing']['customer_name'] = '関連する商品があるため削除できません';
+                $errors['editing']['customer_name'] = '関連する契約があるため削除できません';
             }
         } else {
             $errors['editing']['customer_name'] = '選択肢から選んでください';

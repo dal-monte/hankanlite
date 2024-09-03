@@ -217,7 +217,7 @@ class SupplierController extends Controller
             $busySupplier = $sqlProduct->searchProducts($supplier['supplier_id']);
             $boolBusySupplier = !is_null($busySupplier);
             if ($boolBusySupplier) {
-                $errors['editing']['supplier_name'] = '関連する商品があるため削除できません';
+                $errors['editing']['supplier_name'] = '関連する契約があるため削除できません';
             }
         } else {
             $errors['editing']['supplier_name'] = '選択肢から選んでください';

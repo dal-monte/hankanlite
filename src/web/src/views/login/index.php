@@ -31,7 +31,7 @@ $link = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-ico
                     </div>
                     <div class="mt-3">
                         <button <?php if (is_null($reCaptchaKey)) : echo 'type="submit"';
-                                elseif (isset($reCaptchaKey)) : echo 'data-sitekey=" ' . $reCaptchaKey . ' " data-callback="reCaptchaCallbackSubmit" data-action="submit"';
+                                elseif (isset($reCaptchaKey)) : echo 'data-sitekey="' . $reCaptchaKey . '" data-callback="reCaptchaCallbackSubmit" data-action="submit"';
                                 endif; ?> class="g-recaptcha btn btn-primary">ログイン
                         </button>
                     </div>

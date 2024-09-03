@@ -144,7 +144,7 @@ class UserController extends Controller
             $editingSelect = $this->editingSelect($postUser, $listUsers);
             extract($editingSelect);
         } elseif (isset($_POST['update'])) {
-            $editingUpdate = $this->editingUpdate($sqlUsers, $listRoles, $listUsers);
+            $editingUpdate = $this->editingUpdate($postUsers, $listRoles, $listUsers, $sqlUsers);
             extract($editingUpdate);
         } elseif (isset($_POST['delete'])) {
             $editingDelete = $this->editingDelete($postUser, $listUsers, $sqlUsers);
@@ -211,12 +211,14 @@ class UserController extends Controller
         ];
     }
 
-    private function editingUpdate($sqlUsers, $listRoles, $listUsers)
+    private function editingUpdate($postUsers, $listRoles, $listUsers, $sqlUsers)
     {
         $editingSession = '';
         $editingFieldset = 'disabled';
         $selectFieldset = '';
         $errors['editing'] = [];
+
+        $user['user_name'] = $postUsers['user_name'];
 
         if (isset($_SESSION['user_id'])) {
             $user['user_id'] = $_SESSION['user_id'];

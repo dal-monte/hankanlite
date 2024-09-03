@@ -64,7 +64,7 @@ class Controller
             $template = $this->actionName;
         }
 
-        $controllerName = strtolower($this->controllerName);  // 右記のように変換される　shuffle
+        $controllerName = lcfirst($this->controllerName);  // 右記のように変換される　shuffle
         $path = $controllerName . '/' . $template;  // 右記のように変換される　shuffle/index
         return $view->render($path, $variables, $layout);
     }

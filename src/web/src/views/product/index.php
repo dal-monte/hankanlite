@@ -22,13 +22,13 @@ $link = '
     </div>
 </div>
 
-<div class="container d-grid gap-2 d-sm-flex justify-content-sm-center">
-    <div class="row mt-5" id="collapse">
-        <div class="col-auto">
+<div class="container d-grid mt-5" id="collapse">
+    <div class="row justify-content-center">
+        <div class="col-4">
             <button <?php if (isset($selector)) : echo $selector;
                     endif; ?> class="btn btn-secondary btn-lg gap-3" type="button" data-bs-toggle="collapse" data-bs-target="#increaseProduct" aria-expanded="false" aria-controls="increaseProduct">商品の追加</button>
         </div>
-        <div class="col-auto">
+        <div class="col-4">
             <button <?php if (isset($selector)) : echo $selector;
                     endif; ?> class="btn btn-secondary btn-lg" type="button" data-bs-toggle="collapse" data-bs-target="#editingProduct" aria-expanded="false" aria-controls="editingProduct">商品の編集・削除</button>
         </div>
@@ -161,7 +161,7 @@ $link = '
                                 <button type="submit" class="btn btn-secondary" name="select">選択</button>
                             </div>
                             <div class="col-auto">
-                                <button class="btn btn-danger" type="submit" name="delete" onclick=CheckDelete()>削除</button>
+                                <button class="btn btn-danger" id="deleteProduct">削除</button>
                             </div>
                         </div>
                     </fieldset>
@@ -238,13 +238,16 @@ $link = '
 <script src="/src/assets/js/increasePrice.js"></script>
 <script src="/src/assets/js/editingPrice.js"></script>
 <script>
-    function CheckDelete() {
-        window.onbeforeunload = null;
-        if (confirm('商品をテーブルから削除しますか？')) {
-            return true;
+    var deleteProduct = document.getElementById('deleteProduct');
+
+    deleteProduct.addEventListener('click', function() {
+        if (window.confirm('商品をテーブルから削除しますか？')) {
+            deleteProduct.setAttribute('name', 'delete');
+            document.editing.submit();
+            return;
         } else {
             alert('キャンセルされました');
-            return false;
+            return;
         }
-    }
+    })
 </script>

@@ -161,7 +161,7 @@ if (isset($negativeQuantities)) {
                             <button type="submit" class="btn btn-secondary" name="tableEditingSelect" onclick="window.onbeforeunload=null">編集</button>
                         </div>
                         <div class="col-auto me-3">
-                            <button class="btn btn-danger" type="submit" name="tableEditingDelete" onclick=CheckDelete()>削除</button>
+                            <button class="btn btn-danger" id="deleteTableProduct">削除</button>
                         </div>
                     </div>
                 </fieldset>
@@ -254,15 +254,18 @@ if (isset($negativeQuantities)) {
     });
 </script>
 <script>
-    function CheckDelete() {
-        window.onbeforeunload = null;
-        if (confirm('商品をテーブルから削除しますか？')) {
-            return true;
+    var deleteTableProduct = document.getElementById('deleteTableProduct');
+
+    deleteTableProduct.addEventListener('click', function() {
+        if (window.confirm('商品をテーブルから削除しますか？')) {
+            deleteTableProduct.setAttribute('name', 'tableEditingDelete');
+            document.editing.submit();
+            return;
         } else {
             alert('キャンセルされました');
-            return false;
+            return;
         }
-    }
+    })
 </script>
 <script>
     function CheckNegative() {

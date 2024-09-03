@@ -32,6 +32,7 @@ class MenuController extends Controller
             'token' => $token,
         ]);
     }
+
     public function sales()
     {
         $noPage = $this->noPage;

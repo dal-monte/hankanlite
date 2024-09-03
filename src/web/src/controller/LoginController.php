@@ -8,6 +8,7 @@ class LoginController extends Controller
     public function index()
     {
         session_start();
+        $_SESSION = [];
         session_destroy();
 
         $reCaptchaKey = $this->reCaptcha->checkSetReCaptcha();

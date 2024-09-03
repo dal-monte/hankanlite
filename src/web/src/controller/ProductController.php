@@ -23,10 +23,15 @@ class ProductController extends Controller
         $this->convert->convertJson($listProducts, 'product');
 
         $usedCategories = array_column($listProducts, 'category_id');
+
+        $listUsedCategories = null;
         foreach ($listCategories as $listCategory) {
             if (in_array($listCategory['category_id'], $usedCategories, true)) {
                 $listUsedCategories[] = $listCategory;
             }
+        }
+        if (is_null($listUsedCategories)) {
+            $listUsedCategories = [];
         }
 
         return $this->render([
@@ -64,10 +69,14 @@ class ProductController extends Controller
         $sqlStock = $this->databaseManager->get('Stock');
 
         $usedCategories = array_column($listProducts, 'category_id');
+        $listUsedCategories = null;
         foreach ($listCategories as $listCategory) {
             if (in_array($listCategory['category_id'], $usedCategories, true)) {
                 $listUsedCategories[] = $listCategory;
             }
+        }
+        if (is_null($listUsedCategories)) {
+            $listUsedCategories = [];
         }
 
         $increase = 'show';
@@ -107,6 +116,17 @@ class ProductController extends Controller
             $listProducts = $sqlProducts->fetchAllProduct();
             $this->convert->convertJson($listProducts, 'product');
             $increase = '';
+
+            $usedCategories = array_column($listProducts, 'category_id');
+            $listUsedCategories = null;
+            foreach ($listCategories as $listCategory) {
+                if (in_array($listCategory['category_id'], $usedCategories, true)) {
+                    $listUsedCategories[] = $listCategory;
+                }
+            }
+            if (is_null($listUsedCategories)) {
+                $listUsedCategories = [];
+            }
         }
 
         return $this->render([
@@ -135,10 +155,14 @@ class ProductController extends Controller
         $this->convert->convertJson($listProducts, 'product');
 
         $usedCategories = array_column($listProducts, 'category_id');
+        $listUsedCategories = null;
         foreach ($listCategories as $listCategory) {
             if (in_array($listCategory['category_id'], $usedCategories, true)) {
                 $listUsedCategories[] = $listCategory;
             }
+        }
+        if (is_null($listUsedCategories)) {
+            $listUsedCategories = [];
         }
 
         if (isset($_POST['search'])) {
@@ -156,6 +180,17 @@ class ProductController extends Controller
         } else {
             $editingElse   = $this->editingElse();
             extract($editingElse);
+        }
+
+        $usedCategories = array_column($listProducts, 'category_id');
+        $listUsedCategories = null;
+        foreach ($listCategories as $listCategory) {
+            if (in_array($listCategory['category_id'], $usedCategories, true)) {
+                $listUsedCategories[] = $listCategory;
+            }
+        }
+        if (is_null($listUsedCategories)) {
+            $listUsedCategories = [];
         }
 
         return $this->render([
@@ -328,6 +363,7 @@ class ProductController extends Controller
             $editingFieldset = '';
             $selector = 'disabled';
         }
+
         return [
             'editing' => $editing,
             'product' => $product,

@@ -21,12 +21,12 @@ $link = '
     </div>
 </div>
 
-<div class="container d-grid gap-2 d-sm-flex justify-content-sm-center">
-    <div class="row mt-5" id="collapse">
-        <div class="col-auto">
+<div class="container mt-5" id="collapse">
+    <div class="row justify-content-center">
+        <div class="col-4">
             <button class="btn btn-secondary btn-lg gap-3" type="button" data-bs-toggle="collapse" data-bs-target="#newSupplier" aria-expanded="false" aria-controls="newSupplier">業者情報の追加</button>
         </div>
-        <div class="col-auto">
+        <div class="col-4">
             <button class="btn btn-secondary btn-lg" type="button" data-bs-toggle="collapse" data-bs-target="#editingSupplier" aria-expanded="false" aria-controls="editingSupplier">業者情報の編集・削除</button>
         </div>
         <div class="collapse <?php if (isset($increase)) : echo $increase;

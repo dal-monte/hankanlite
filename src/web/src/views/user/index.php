@@ -20,12 +20,13 @@ $link = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-ico
         </div>
     </div>
 </div>
-<div class="container d-grid gap-2 d-sm-flex justify-content-sm-center">
-    <div class="row mt-5" id="collapse">
-        <div class="col">
+
+<div class="container mt-5" id="collapse">
+    <div class="row justify-content-center">
+        <div class="col-4">
             <button class="btn btn-secondary btn-lg px-4 gap-3" type="button" data-bs-toggle="collapse" data-bs-target="#multiCollapseExample1" aria-expanded="false" aria-controls="multiCollapseExample1">新規社員登録</button>
         </div>
-        <div class="col">
+        <div class="col-4">
             <button class="btn btn-secondary btn-lg px-4" type="button" data-bs-toggle="collapse" data-bs-target="#multiCollapseExample2" aria-expanded="false" aria-controls="multiCollapseExample2">既存社員編集</button>
         </div>
         <div class="collapse <?php if (isset($increaseSession)) : echo $increaseSession;
@@ -137,7 +138,7 @@ $link = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-ico
                                 <button type="submit" class="btn btn-secondary" name='select'>選択</button>
                             </div>
                             <div class="col-auto">
-                                <button type="submit" onclick=CheckDelete() class="btn btn-danger" name='delete'>削除</button>
+                                <button class="btn btn-danger" id="deleteUser">削除</button>
                             </div>
                         </div>
                     </fieldset>
@@ -199,13 +200,16 @@ $link = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-ico
 <script src="/src/assets/js/passwordAgain.js"></script>
 <script src="/src/assets/js/user.js"></script>
 <script>
-    function CheckDelete() {
-        window.onbeforeunload = null;
-        if (confirm('商品をテーブルから削除しますか？')) {
-            return true;
+    var deleteUser = document.getElementById('deleteUser');
+
+    deleteUser.addEventListener('click', function() {
+        if (window.confirm('社員情報をテーブルから削除しますか？')) {
+            deleteUser.setAttribute('name', 'delete');
+            document.editing.submit();
+            return;
         } else {
             alert('キャンセルされました');
-            return false;
+            return;
         }
-    }
+    })
 </script>

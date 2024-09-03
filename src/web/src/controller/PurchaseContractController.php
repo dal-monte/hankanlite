@@ -423,10 +423,8 @@ class purchaseContractController extends Controller
             foreach ($listPurchaseProducts as $listPurchaseProduct) {
                 $purchaseStocks[$listPurchaseProduct['product_id']] = $listPurchaseProduct['number'];
             }
-            if (!empty($sqlStock)) {
-                $sqlStock = $this->databaseManager->get('Stock');
-                $sqlStock->decreaseMulti($purchaseStocks);
-            }
+            $sqlStock = $this->databaseManager->get('Stock');
+            $sqlStock->decreaseMulti($purchaseStocks);
 
             unset($_SESSION["purchaseEditing"]);
             $editingSelectFieldset = 'disabled';

@@ -21,6 +21,7 @@ $link = '
         </div>
     </div>
 </div>
+
 <div class="container mt-5" id="collapse">
     <div class="row justify-content-center">
         <div class="col-4">
@@ -149,7 +150,7 @@ $link = '
                                 <button type="submit" class="btn btn-success" name="select">編集</button>
                             </div>
                             <div class="col-auto">
-                                <button class="btn btn-danger" type="submit" name="delete" onclick=CheckDelete()>削除</button>
+                                <button class="btn btn-danger" id="deleteContract">削除</button>
                             </div>
                             <div class="col-auto">
                                 <button type="submit" class="btn btn-secondary" name="cancel">キャンセル</button>
@@ -185,13 +186,16 @@ endif; ?>
 <script src="/src/assets/js/purchaseProduct.js"></script>
 <script src="/src/assets/js/purchaseContract.js"></script>
 <script>
-    function CheckDelete() {
-        window.onbeforeunload = null;
-        if (confirm('契約をテーブルから削除しますか？')) {
-            return true;
+    var deleteContract = document.getElementById('deleteContract');
+
+    deleteContract.addEventListener('click', function() {
+        if (window.confirm('契約をテーブルから削除しますか？')) {
+            deleteContract.setAttribute('name', 'delete');
+            document.editing.submit();
+            return;
         } else {
             alert('キャンセルされました');
-            return false;
+            return;
         }
-    }
+    })
 </script>

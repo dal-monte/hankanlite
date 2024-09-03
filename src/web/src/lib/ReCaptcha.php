@@ -5,6 +5,7 @@ class reCaptcha
 
     public function connect($reCaptchaData)
     {
+        // recaptchaKeyを変数に入れる
         if ($reCaptchaData['siteKey'] === '' && $reCaptchaData['secretKey'] === '') {
             $this->reCaptchaKeys = null;
         } else {
@@ -14,6 +15,7 @@ class reCaptcha
 
     public function checkSetReCaptcha()
     {
+        // recaptchaキーがenvファイルに入力されているかチェック
         if (is_null($this->reCaptchaKeys)) {
             return null;
         } else {

@@ -424,10 +424,9 @@ class SalesContractController extends Controller
             foreach ($listSalesProducts as $listSalesProduct) {
                 $salesStocks[$listSalesProduct['product_id']] = $listSalesProduct['number'];
             }
-            if (!empty($sqlStock)) {
-                $sqlStock = $this->databaseManager->get('Stock');
-                $sqlStock->increaseMulti($salesStocks);
-            }
+            $sqlStock = $this->databaseManager->get('Stock');
+            $sqlStock->increaseMulti($salesStocks);
+
             unset($_SESSION["salesEditing"]);
             $editingSelectFieldset = 'disabled';
             $editingSession = '';

@@ -22,12 +22,12 @@ $link = '
     </div>
 </div>
 
-<div class="container d-grid gap-2 d-sm-flex justify-content-sm-center">
-    <div class="row mt-5" id="collapse">
-        <div class="col-auto">
+<div class="container mt-5" id="collapse">
+    <div class="row justify-content-center">
+        <div class="col-4">
             <button class="btn btn-secondary btn-lg gap-3" type="button" data-bs-toggle="collapse" data-bs-target="#increaseCategory" aria-expanded="false" aria-controls="increaseCategory">カテゴリーの追加</button>
         </div>
-        <div class="col-auto">
+        <div class="col-4">
             <button class="btn btn-secondary btn-lg" type="button" data-bs-toggle="collapse" data-bs-target="#editingCategory" aria-expanded="false" aria-controls="editingCategory">カテゴリーの編集・削除</button>
         </div>
         <div class="collapse <?php if (isset($increase)) : echo $increase;
@@ -149,7 +149,7 @@ $link = '
     var deleteCategory = document.getElementById('deleteCategory');
 
     deleteCategory.addEventListener('click', function() {
-        if (window.confirm('商品をテーブルから削除しますか？')) {
+        if (window.confirm('カテゴリーをテーブルから削除しますか？')) {
             deleteCategory.setAttribute('name', 'delete');
             document.editing.submit();
             return;
