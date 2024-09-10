@@ -20,8 +20,8 @@ class DatabaseManager
     {
         if (!isset($this->models[$modelName])) {
             /**
-             * $modelNameが'Employee'の場合、
-             * modelディレクトリのEmployeeクラスにmysqlログイン情報を渡してnewする
+             * (例)$modelNameが'Product'の場合、
+             * modelsディレクトリのProductクラスにmysqlログイン情報を渡してnewする
              */
             $model = new $modelName($this->mysqli);
             $this->models[$modelName] = $model;

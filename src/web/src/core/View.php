@@ -17,7 +17,7 @@ class View
         //　$groups = [];
 
         ob_start();
-        require $this->baseDir . '/' . $path . '.php'; //左記は require 'views/shuffle/index.php' のように変換される
+        require $this->baseDir . '/' . $path . '.php'; //左記は require 'views/product/index.php' のように変換される
         $content = ob_get_clean();
 
         ob_start();

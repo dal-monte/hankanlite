@@ -144,7 +144,7 @@ class UserController extends Controller
             $editingSelect = $this->editingSelect($postUser, $listUsers);
             extract($editingSelect);
         } elseif (isset($_POST['update'])) {
-            $editingUpdate = $this->editingUpdate($postUsers, $listRoles, $listUsers, $sqlUsers);
+            $editingUpdate = $this->editingUpdate($postUser, $listRoles, $listUsers, $sqlUsers);
             extract($editingUpdate);
         } elseif (isset($_POST['delete'])) {
             $editingDelete = $this->editingDelete($postUser, $listUsers, $sqlUsers);
