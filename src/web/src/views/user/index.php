@@ -24,13 +24,13 @@ $link = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-ico
 <div class="container mt-5" id="collapse">
     <div class="row justify-content-center">
         <div class="col-4">
-            <button class="btn btn-secondary btn-lg px-4 gap-3" type="button" data-bs-toggle="collapse" data-bs-target="#multiCollapseExample1" aria-expanded="false" aria-controls="multiCollapseExample1">新規社員登録</button>
+            <button class="btn btn-secondary btn-lg px-4 gap-3" type="button" data-bs-toggle="collapse" data-bs-target="#increaseUser" aria-expanded="false" aria-controls="increaseUser">新規社員登録</button>
         </div>
         <div class="col-4">
-            <button class="btn btn-secondary btn-lg px-4" type="button" data-bs-toggle="collapse" data-bs-target="#multiCollapseExample2" aria-expanded="false" aria-controls="multiCollapseExample2">既存社員編集</button>
+            <button class="btn btn-secondary btn-lg px-4" type="button" data-bs-toggle="collapse" data-bs-target="#editingUser" aria-expanded="false" aria-controls="editingUser">既存社員編集</button>
         </div>
         <div class="collapse <?php if (isset($increaseSession)) : echo $increaseSession;
-                                endif; ?>" id="multiCollapseExample1" data-bs-parent="#collapse">
+                                endif; ?>" id="increaseUser" data-bs-parent="#collapse">
             <div class="card card-body bg-light">
                 <h3>新規社員名の登録</h3>
                 <?php if (isset($errors['increase'])) : ?>
@@ -105,7 +105,7 @@ $link = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-ico
             </div>
         </div>
         <div class="collapse <?php if (isset($editingSession)) : echo $editingSession;
-                                endif; ?>" id="multiCollapseExample2" data-bs-parent="#collapse">
+                                endif; ?>" id="editingUser" data-bs-parent="#collapse">
             <div class="card card-body bg-light">
                 <h3>既存社員の編集・削除</h3>
                 <?php if (isset($errors['editing'])) : ?>
