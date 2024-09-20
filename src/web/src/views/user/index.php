@@ -54,7 +54,7 @@ $link = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-ico
                         </div>
                         <label for="user_name" class="col-form-label mt-3">社員名</label>
                         <div class="col-auto">
-                            <input value="<?php if (isset($increaseUser['user_id'])) : echo escape($increaseUser['user_id']);
+                            <input value="<?php if (isset($increaseUser['user_name'])) : echo escape($increaseUser['user_name']);
                                             endif; ?>" type="text" id="user_name" name="user_name" class="form-control" aria-labelledby="nameCaution">
                         </div>
                         <div class="col-auto">
