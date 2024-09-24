@@ -159,15 +159,13 @@ class Validate
 
         if (isset($customer['customer_id'])) {
             $customerIdNull = !strlen($customer['customer_id']);
-            $customerIdOver = mb_strlen($customer['customer_id']) > 6;
-            $customerIdShort = mb_strlen($customer['customer_id']) < 5;
             if ($customerIdNull) {
                 $errors['customer_id'] = '顧客IDを入力してください';
             } elseif (!filter_var($customer['customer_id'], FILTER_VALIDATE_INT)) {
                 $errors['customer_id'] = '顧客IDは半角数字のみで入力して下さい';
             } elseif ($customer['customer_id'] < 0) {
                 $errors['customer_id'] = '顧客IDは正の整数を半角数字で入力して下さい';
-            } elseif ($customerIdOver || $customerIdShort) {
+            } elseif (!(mb_strlen($customer['customer_id']) === 5)) {
                 $errors['customer_id'] = '顧客IDは5文字で入力してください';
             }
         }
@@ -217,15 +215,13 @@ class Validate
 
         if (isset($supplier['supplier_id'])) {
             $supplierIdNull = !strlen($supplier['supplier_id']);
-            $supplierIdOver = mb_strlen($supplier['supplier_id']) > 6;
-            $supplierIdShort = mb_strlen($supplier['supplier_id']) < 5;
             if ($supplierIdNull) {
                 $errors['supplier_id'] = '業者IDを入力してください';
             } elseif (!filter_var($supplier['supplier_id'], FILTER_VALIDATE_INT)) {
                 $errors['supplier_id'] = '業者IDは半角数字のみで入力して下さい';
             } elseif ($supplier['supplier_id'] < 0) {
                 $errors['supplier_id'] = '業者IDは正の整数を半角数字で入力して下さい';
-            } elseif ($supplierIdOver || $supplierIdShort) {
+            } elseif (!(mb_strlen($supplier['supplier_id']) === 5)) {
                 $errors['supplier_id'] = '業者IDは5文字で入力してください';
             }
         }
@@ -274,8 +270,6 @@ class Validate
 
         if (isset($contract['contract_id'])) {
             $contractIdNull = !strlen($contract['contract_id']);
-            $contractIdOver = mb_strlen($contract['contract_id']) > 7;
-            $contractIdShort = mb_strlen($contract['contract_id']) < 6;
             if (isset($contract['contract_id']) && $action === 'increase') {
                 if ($contractIdNull) {
                     $errors['contract_id'] = '契約番号を入力してください';
@@ -283,7 +277,7 @@ class Validate
                     $errors['contract_id'] = '契約番号は半角数字のみで入力して下さい';
                 } elseif ($contract['contract_id'] < 0) {
                     $errors['contract_id'] = '契約番号は正の整数を半角数字で入力して下さい';
-                } elseif ($contractIdOver || $contractIdShort) {
+                } elseif (!(mb_strlen($contract['contract_id']) === 6)) {
                     $errors['contract_id'] = '契約番号は6文字で入力してください';
                 }
             }
@@ -368,7 +362,11 @@ class Validate
 
             if ($userIdNull) {
                 $errors['user_id'] = '社員番号を入力してください';
-            } elseif (!mb_strlen($user['user_id']) === 4) {
+            } elseif (!filter_var($user['user_id'], FILTER_VALIDATE_INT)) {
+                    $errors['contract_id'] = '社員番号は半角数字のみで入力して下さい';
+            } elseif ($user['user_id'] < 0) {
+                    $errors['contract_id'] = '社員番号は正の整数を半角数字で入力して下さい';
+            } elseif (!(mb_strlen($user['user_id']) === 4)) {
                 $errors['user_id'] = '社員番号は4文字で入力してください';
             }
         }
