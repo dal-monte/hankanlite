@@ -398,9 +398,9 @@ class Validate
             } elseif (mb_strlen($user['password']) < 6) {
                 $errors['password'] = 'パスワードは6文字以上で入力して下さい';
             } elseif (!strlen($passwordString)) {
-                $errors['password'] = 'パスワードには最低1文字以上のローマ字を含んで下さい';
-            } elseif (!strlen($passwordInt)) {
                 $errors['password'] = 'パスワードには最低1文字以上の数字を含んで下さい';
+            } elseif (!strlen($passwordInt)) {
+                $errors['password'] = 'パスワードには最低1文字以上のローマ字を含んで下さい';
             }
         }
 
