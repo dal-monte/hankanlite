@@ -233,7 +233,7 @@ class UserController extends Controller
         }
 
         if (strpos($postUser['role'], '@')) {
-            $user['role_id'] = (int)strstr($postUser['role'], '@', true);
+            $user['role_id'] = strstr($postUser['role'], '@', true);
             $user['role_name'] = substr(strstr($postUser['role'], '@', false), 1);
             $errors['editing'] = $errors['editing'] + $this->validate->roleValidate($user, $listRoles);
         } else {
