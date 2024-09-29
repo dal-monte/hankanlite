@@ -19,7 +19,7 @@ class User extends DatabaseModel
 
     public function update($user)
     {
-        $this->execute('UPDATE users SET user_name = ?,role_id = ? WHERE user_id = ?', ['sii', $user['user_name'], $user['role'], $user['user_id']]);
+        $this->execute('UPDATE users SET user_name = ?,role_id = ? WHERE user_id = ?', ['sii', $user['user_name'], $user['role_id'], $user['user_id']]);
     }
 
     public function check($user_id)
