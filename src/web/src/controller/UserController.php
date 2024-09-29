@@ -176,7 +176,7 @@ class UserController extends Controller
 
         $editingSession = 'show';
         if (strpos($postUser['user_name'], '@')) {
-            $user['user_id'] = strstr($postUser['user_name'], '@', true);
+            $user['user_id'] = (int)strstr($postUser['user_name'], '@', true);
             $user['name'] = substr(strstr($postUser['user_name'], '@', false), 1);
             $errors['editing'] = $errors['editing'] + $this->validate->userValidate($user, $listUsers, 'select');
         } else {
@@ -233,7 +233,7 @@ class UserController extends Controller
         }
 
         if (strpos($postUser['role'], '@')) {
-            $user['role_id'] = strstr($postUser['role'], '@', true);
+            $user['role_id'] = (int)strstr($postUser['role'], '@', true);
             $user['role_name'] = substr(strstr($postUser['role'], '@', false), 1);
             $errors['editing'] = $errors['editing'] + $this->validate->roleValidate($user, $listRoles);
         } else {
@@ -272,7 +272,7 @@ class UserController extends Controller
         $errors['editing'] = [];
 
         if (strpos($postUser['user_name'], '@')) {
-            $user['user_id'] = strstr($postUser['user_name'], '@', true);
+            $user['user_id'] = (int)strstr($postUser['user_name'], '@', true);
             $user['name'] = substr(strstr($postUser['user_name'], '@', false), 1);
             $errors['editing'] = $errors['editing'] + $this->validate->userValidate($user, $listUsers, 'delete');
         } else {
