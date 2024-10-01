@@ -126,7 +126,7 @@ class Validate
             foreach ($listProducts as $listProduct) {
                 $duplicationName = $productName === $listProduct['product_name'];
                 if ($duplicationName) {
-                    $errors['product_name'] = 'すでに同名のカテゴリーが存在します※重複できません';
+                    $errors['product_name'] = 'すでに同名の商品が存在します※重複できません';
                 }
             }
         }
@@ -136,7 +136,7 @@ class Validate
                 $duplicationName = $productName === $listProduct['product_name'];
                 $notSameId = $product['product_id'] !== $listProduct['product_id'];
                 if ($duplicationName && $notSameId) {
-                    $errors['product_name'] = 'すでに同名のカテゴリーが存在します※重複できません';
+                    $errors['product_name'] = 'すでに同名の商品が存在します※重複できません';
                 }
             }
         }
