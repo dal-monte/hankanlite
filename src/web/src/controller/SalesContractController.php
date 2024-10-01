@@ -312,10 +312,10 @@ class SalesContractController extends Controller
         if (!count($errors['editing'])) {
             $selector = 'disabled';
             $_SESSION['salesEditing'] = $contract;
-            foreach ($listSalesContracts as $listSalesContracts) {
-                if ($contract['customer_id'] === $listSalesContracts['customer_id']) {
-                    $listSalesContracts['contract_id'] = $listSalesContracts['sales_contract_id'];
-                    $checkedSalesContracts[] = $listSalesContracts;
+            foreach ($listSalesContracts as $listSalesContract) {
+                if ($contract['customer_id'] === $listSalesContract['customer_id']) {
+                    $listSalesContract['contract_id'] = $listSalesContract['sales_contract_id'];
+                    $checkedSalesContracts[] = $listSalesContract;
                 }
             }
             $listSalesContracts = $checkedSalesContracts;
@@ -352,10 +352,10 @@ class SalesContractController extends Controller
 
         if (isset($_POST['contract_id'])) {
             $contract['contract_id'] = $_POST['contract_id'];
-            foreach ($listSalesContracts as $listSalesContracts) {
-                if ($contract['customer_id'] === $listSalesContracts['customer_id']) {
-                    $listSalesContracts['contract_id'] = $listSalesContracts['sales_contract_id'];
-                    $checkedSalesContracts[] = $listSalesContracts;
+            foreach ($listSalesContracts as $listSalesContract) {
+                if ($contract['customer_id'] === $listSalesContract['customer_id']) {
+                    $listSalesContract['contract_id'] = $listSalesContract['sales_contract_id'];
+                    $checkedSalesContracts[] = $listSalesContract;
                 }
             }
             $listSalesContracts = $checkedSalesContracts;
@@ -408,10 +408,10 @@ class SalesContractController extends Controller
             throw new HttpNotFoundException();
         }
 
-        foreach ($listSalesContracts as $listSalesContracts) {
-            if ($contract['customer_id'] === $listSalesContracts['customer_id']) {
-                $listSalesContracts['contract_id'] = $listSalesContracts['sales_contract_id'];
-                $checkedSalesContracts[] = $listSalesContracts;
+        foreach ($listSalesContracts as $listSalesContract) {
+            if ($contract['customer_id'] === $listSalesContract['customer_id']) {
+                $listSalesContract['contract_id'] = $listSalesContract['sales_contract_id'];
+                $checkedSalesContracts[] = $listSalesContract;
             }
         }
         $listSalesContracts = $checkedSalesContracts;
