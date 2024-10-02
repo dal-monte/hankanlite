@@ -227,9 +227,9 @@ class ProductController extends Controller
         if (strpos($postCategory['category_name'], '@')) {
             $category['category_id'] = strstr($postCategory['category_name'], '@', true);
             $category['category_name'] = substr(strstr($postCategory['category_name'], '@', false), 1);
-            $errors['increaseTable'] = $this->validate->categoryValidate($category, $listCategories, 'select', $listProducts);
+            $errors['editing'] = $this->validate->categoryValidate($category, $listCategories, 'select', $listProducts);
         } else {
-            $errors['increaseTable']['category_name'] = 'カテゴリーを選択肢から選んでください';
+            $errors['editing']['category_name'] = 'カテゴリーを選択肢から選んでください';
         }
 
         if (!count($errors['editing'])) {
