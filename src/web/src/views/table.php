@@ -161,7 +161,7 @@ if (isset($negativeQuantities)) {
                             <button type="submit" class="btn btn-secondary" name="tableEditingSelect" onclick="window.onbeforeunload=null">編集</button>
                         </div>
                         <div class="col-auto me-3">
-                            <button class="btn btn-danger" id="deleteTableProduct">削除</button>
+                            <button class="btn btn-danger" id="deleteTableProduct" onclick="window.onbeforeunload=null">削除</button>
                         </div>
                     </div>
                 </fieldset>
