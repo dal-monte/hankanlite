@@ -15,9 +15,17 @@ class CustomerController extends Controller
             unset($_SESSION['customer_name']);
         }
 
-        $sqlCustomers = $this->databaseManager->get('Customer');
-        // // mysqlのcustomersテーブルの内容をfetch_allしてjsonファイルにエクスポート
+        if (isset($_SESSION['now_user_id'])) {
+        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+        } else {
+            throw new HttpNotFoundException();
+        }
+
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlCustomers = $this->databaseManager->get('Customer', $companyId);
+        // カテゴリー選択フォーム用データ取り出し
         $listCustomers = $sqlCustomers->fetchAllCustomer();
+        // 表にデータを挿入
         $this->convert->convertJson($listCustomers, 'customer');
 
         return $this->render([
@@ -54,9 +62,6 @@ class CustomerController extends Controller
 
         $increase = 'show';
 
-        // modelsディレクトリのCustomerクラスをnewして$sqlCustomersに渡す
-        $sqlCustomers = $this->databaseManager->get('Customer');
-
         if (isset($_POST['customer_id']) && isset($_POST['customer_name'])) {
             $customer = [
                 'customer_id' => trim($_POST['customer_id']),
@@ -66,7 +71,17 @@ class CustomerController extends Controller
             throw new HttpNotFoundException();
         }
 
+        if (isset($_SESSION['now_user_id'])) {
+        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+        } else {
+            throw new HttpNotFoundException();
+        }
+
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlCustomers = $this->databaseManager->get('Customer', $companyId);
+        // カテゴリー選択フォーム用データ取り出し
         $listCustomers = $sqlCustomers->fetchAllCustomer();
+
         $errors['increase'] = $errors['increase'] + $this->validate->customerValidate($customer, $sqlCustomers, 'increase');
 
         if (!count($errors['increase'])) {
@@ -76,6 +91,11 @@ class CustomerController extends Controller
             $listCustomers = $sqlCustomers->fetchAllCustomer();
             $this->convert->convertJson($listCustomers, 'customer');
         }
+
+        // カテゴリー選択フォーム用データ取り出し
+        $listCustomers = $sqlCustomers->fetchAllCustomer();
+        // 表にデータを挿入
+        $this->convert->convertJson($listCustomers, 'customer');
 
         return $this->render([
             'title' => 'カテゴリー',
@@ -93,22 +113,29 @@ class CustomerController extends Controller
 
         $token = $this->securityCheck("sales");
 
-        // modelsディレクトリのCustomerクラスをnewして$sqlCustomersに渡す
-        $sqlCustomers = $this->databaseManager->get('Customer');
-
         if (isset($_POST['customer_name'])) {
             $postCustomer['customer_name'] = trim($_POST['customer_name']);
         } else {
             throw new HttpNotFoundException();
         }
 
-        // // mysqlのcategoriesテーブルの内容をfetch_allしてjsonファイルにエクスポート
+        if (isset($_SESSION['now_user_id'])) {
+        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+        } else {
+            throw new HttpNotFoundException();
+        }
+
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlCustomers = $this->databaseManager->get('Customer', $companyId);
+        // カテゴリー選択フォーム用データ取り出し
         $listCustomers = $sqlCustomers->fetchAllCustomer();
+        // 表にデータを挿入
         $this->convert->convertJson($listCustomers, 'customer');
 
         $editing = '';
         $editingFieldset = 'disabled';
         $selectFieldset = '';
+
         if (isset($_POST['select'])) {
             $editingSelect = $this->editingSelect($postCustomer, $listCustomers);
             extract($editingSelect);
@@ -142,6 +169,7 @@ class CustomerController extends Controller
         $editingFieldset = 'disabled';
         $selectFieldset = '';
 
+        // POSTデータが「ID＠名前」となっているので＠マークの前後を分けて変数に入れてバリデーション
         if (strpos($postCustomer['customer_name'], '@')) {
             $customer['customer_id'] = strstr($postCustomer['customer_name'], '@', true);
             $customer['customer_name'] = substr(strstr($postCustomer['customer_name'], '@', false), 1);
@@ -158,6 +186,7 @@ class CustomerController extends Controller
         } else {
             $customer = [];
         }
+
         return [
             'editing' => $editing,
             'customer' => $customer,
@@ -183,6 +212,7 @@ class CustomerController extends Controller
             throw new HttpNotFoundException();
         }
         $errors['editing'] = $errors['editing'] + $this->validate->customerValidate($customer);
+
         if (!count($errors['editing'])) {
             $sqlCustomers->update($customer);
             $customer = [];
@@ -214,12 +244,19 @@ class CustomerController extends Controller
         $editingFieldset = 'disabled';
         $selectFieldset = '';
 
+        if (isset($_SESSION['now_user_id'])) {
+        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+        } else {
+            throw new HttpNotFoundException();
+        }
+
+        // POSTデータが「ID＠名前」となっているので＠マークの前後を分けて変数に入れてバリデーション
         if (strpos($postCustomer['customer_name'], '@')) {
             $customer['customer_id'] = strstr($postCustomer['customer_name'], '@', true);
             $customer['customer_name'] = substr(strstr($postCustomer['customer_name'], '@', false), 1);
             $errors['editing'] = $errors['editing'] + $this->validate->customerValidate($customer, $listCustomers, 'delete');
 
-            $sqlProduct = $this->databaseManager->get('Product');
+            $sqlProduct = $this->databaseManager->get('Product', $companyId);
             $busyCustomer = $sqlProduct->searchProducts($customer['customer_id']);
             $boolBusyCustomer = !is_null($busyCustomer);
             if ($boolBusyCustomer) {

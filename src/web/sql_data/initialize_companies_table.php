@@ -10,29 +10,20 @@ if ($mysqli->connect_error) {
     throw new RuntimeException('mysqli接続エラー:' . $mysqli->connect_error);
 }
 
-$insertTableSql = <<<EOT
-INSERT INTO roles (
-    role,
-    role_id,
-    role_name
-) VALUES (
-    'root',
-    0,
-    'root'
-), (
-    'admin',
-    1,
-    'システム管理者'
-), (
-    'salesWorker',
-    2,
-    '販売事務'
-), (
-    'purchaseWorker',
-    3,
-    '仕入事務'
-)
+$mysqli->query('SET foreign_key_checks = 0');
+
+$mysqli->query('DROP TABLE IF EXISTS companies');
+
+$createTableSql = <<<EOT
+CREATE TABLE IF NOT EXISTS companies (
+    company_id INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
+    company_name VARCHAR(100) NOT NULL,
+    index(company_id)
+) ENGINE=INNODB DEFAULT CHARSET=utf8mb4
 EOT;
 
-$mysqli->query($insertTableSql);
+
+
+$mysqli->query($createTableSql);
+$mysqli->query('SET foreign_key_checks = 1');
 $mysqli->close();

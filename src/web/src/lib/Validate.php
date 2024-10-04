@@ -126,7 +126,7 @@ class Validate
             foreach ($listProducts as $listProduct) {
                 $duplicationName = $productName === $listProduct['product_name'];
                 if ($duplicationName) {
-                    $errors['product_name'] = 'すでに同名のカテゴリーが存在します※重複できません';
+                    $errors['product_name'] = 'すでに同名の商品が存在します※重複できません';
                 }
             }
         }
@@ -136,7 +136,7 @@ class Validate
                 $duplicationName = $productName === $listProduct['product_name'];
                 $notSameId = $product['product_id'] !== $listProduct['product_id'];
                 if ($duplicationName && $notSameId) {
-                    $errors['product_name'] = 'すでに同名のカテゴリーが存在します※重複できません';
+                    $errors['product_name'] = 'すでに同名の商品が存在します※重複できません';
                 }
             }
         }
@@ -159,15 +159,13 @@ class Validate
 
         if (isset($customer['customer_id'])) {
             $customerIdNull = !strlen($customer['customer_id']);
-            $customerIdOver = mb_strlen($customer['customer_id']) > 6;
-            $customerIdShort = mb_strlen($customer['customer_id']) < 5;
             if ($customerIdNull) {
                 $errors['customer_id'] = '顧客IDを入力してください';
             } elseif (!filter_var($customer['customer_id'], FILTER_VALIDATE_INT)) {
                 $errors['customer_id'] = '顧客IDは半角数字のみで入力して下さい';
             } elseif ($customer['customer_id'] < 0) {
                 $errors['customer_id'] = '顧客IDは正の整数を半角数字で入力して下さい';
-            } elseif ($customerIdOver || $customerIdShort) {
+            } elseif (!(mb_strlen($customer['customer_id']) === 5)) {
                 $errors['customer_id'] = '顧客IDは5文字で入力してください';
             }
         }
@@ -217,15 +215,13 @@ class Validate
 
         if (isset($supplier['supplier_id'])) {
             $supplierIdNull = !strlen($supplier['supplier_id']);
-            $supplierIdOver = mb_strlen($supplier['supplier_id']) > 6;
-            $supplierIdShort = mb_strlen($supplier['supplier_id']) < 5;
             if ($supplierIdNull) {
                 $errors['supplier_id'] = '業者IDを入力してください';
             } elseif (!filter_var($supplier['supplier_id'], FILTER_VALIDATE_INT)) {
                 $errors['supplier_id'] = '業者IDは半角数字のみで入力して下さい';
             } elseif ($supplier['supplier_id'] < 0) {
                 $errors['supplier_id'] = '業者IDは正の整数を半角数字で入力して下さい';
-            } elseif ($supplierIdOver || $supplierIdShort) {
+            } elseif (!(mb_strlen($supplier['supplier_id']) === 5)) {
                 $errors['supplier_id'] = '業者IDは5文字で入力してください';
             }
         }
@@ -274,8 +270,6 @@ class Validate
 
         if (isset($contract['contract_id'])) {
             $contractIdNull = !strlen($contract['contract_id']);
-            $contractIdOver = mb_strlen($contract['contract_id']) > 7;
-            $contractIdShort = mb_strlen($contract['contract_id']) < 6;
             if (isset($contract['contract_id']) && $action === 'increase') {
                 if ($contractIdNull) {
                     $errors['contract_id'] = '契約番号を入力してください';
@@ -283,7 +277,7 @@ class Validate
                     $errors['contract_id'] = '契約番号は半角数字のみで入力して下さい';
                 } elseif ($contract['contract_id'] < 0) {
                     $errors['contract_id'] = '契約番号は正の整数を半角数字で入力して下さい';
-                } elseif ($contractIdOver || $contractIdShort) {
+                } elseif (!(mb_strlen($contract['contract_id']) === 6)) {
                     $errors['contract_id'] = '契約番号は6文字で入力してください';
                 }
             }
@@ -368,8 +362,12 @@ class Validate
 
             if ($userIdNull) {
                 $errors['user_id'] = '社員番号を入力してください';
-            } elseif (!mb_strlen($user['user_id']) === 4) {
-                $errors['user_id'] = '社員番号は4文字で入力してください';
+            } elseif (!filter_var($user['user_id'], FILTER_VALIDATE_INT)) {
+                    $errors['user_id'] = '社員番号は半角数字のみで入力して下さい';
+            } elseif ($user['user_id'] < 0) {
+                    $errors['user_id'] = '社員番号は正の整数を半角数字で入力して下さい';
+            } elseif (!(mb_strlen($user['user_id']) === 8)) {
+                $errors['user_id'] = '社員番号は4桁で入力してください';
             }
         }
 
@@ -412,7 +410,6 @@ class Validate
         $update = $action === 'update';
         $select = $action === 'select';
         $delete = $action === 'delete';
-        $increaseOrUpdate = $increase || $update;
         $selectOrDelete = $select || $delete;
 
         if ($listExist && $increase) {
@@ -427,6 +424,39 @@ class Validate
             $idList = array_column($listUsers, 'user_id');
             if (!in_array($user['user_id'], $idList)) {
                 $errors['user_name'] = '選択肢から選んでください';
+            }
+        }
+
+        if ($listExist && $update) {
+            $adminCount = 0;
+            foreach ($listUsers as $listUser) {
+                if ($listUser['role_id'] === 1){
+                    $adminCount++;
+                }
+                if ($user['user_id'] === $listUser['user_id']) {
+                    $beforeUserData = $listUser;
+                }
+            }
+            $checkIfBeforeAdmin = (($beforeUserData['role_id'] === 1) and ($user['role_id'] !== 1));
+            $ifOnlyAdmin = ($adminCount === 1);
+            if ($checkIfBeforeAdmin and $ifOnlyAdmin) {
+                $errors['user_id'] = 'システム管理者は最低一人必要です';
+            }
+        }
+
+        if ($listExist && $delete) {
+            $adminCount = 0;
+            foreach ($listUsers as $listUser) {
+                if ($listUser['role_id'] === 1){
+                    $adminCount++;
+                }
+            }
+            $checkIfAdmin = ($user['role_id'] === 1);
+            $ifOnlyAdmin = ($adminCount === 1);
+            if ($checkIfAdmin and $ifOnlyAdmin) {
+                $errors['user_id'] = 'システム管理者は最低一人必要です';
+            }   elseif (count($listUsers) === 1) {
+                $errors['user_id'] = '社員は最低一人必要です';
             }
         }
 
@@ -449,7 +479,7 @@ class Validate
         if ($listExist) {
             $correctRoleBool = false;
             foreach ($listRoles as $listContract) {
-                if ($role['role_name'] === $listContract['role_name'] && $role['role_id'] === $listContract['role_id']) {
+                if ($role['role_name'] === $listContract['role_name'] && (int)$role['role_id'] === (int)$listContract['role_id']) {
                     $correctRoleBool = true;
                 }
             }
@@ -460,4 +490,65 @@ class Validate
 
         return $errors;
     }
+
+        public function companyValidate($company, $listCompanies = null, $action = null)
+    {
+        $errors = [];
+
+        if (isset($company['company_id'])) {
+            $companyIdNull = !strlen($company['company_id']);
+
+            if ($companyIdNull) {
+                $errors['company_id'] = '企業IDを入力してください';
+            } elseif (!filter_var($company['company_id'], FILTER_VALIDATE_INT)) {
+                    $errors['company_id'] = '企業IDは半角数字のみで入力して下さい';
+            } elseif ($company['company_id'] < 0) {
+                    $errors['company_id'] = '企業IDは正の整数を半角数字で入力して下さい';
+            } elseif (!(mb_strlen($company['company_id']) === 4)) {
+                $errors['company_id'] = '企業IDは4文字で入力してください';
+            }
+        }
+
+        if (isset($company['company_name'])) {
+            $companyName = $company['company_name'];
+        }
+
+        if (isset($companyName)) {
+            $companyNull = !strlen($companyName);
+
+            if ($companyNull) {
+                $errors['company_name'] = '企業名を入力してください';
+            } elseif (mb_strlen($companyName) > 30) {
+                $errors['company_name'] = '企業名は30文字以内で入力してください';
+            }
+        }
+
+        $listExist = !is_null($listCompanies);
+        $listNotExist = is_null($listCompanies);
+        $increase = $action === 'increase';
+        $update = $action === 'update';
+        $select = $action === 'select';
+        $delete = $action === 'delete';
+        $increaseOrUpdate = $increase || $update;
+        $selectOrDelete = $select || $delete;
+
+        if ($listExist && $increase) {
+            foreach ($listCompanies as $listUser) {
+                if ($company['company_id'] === $listUser['company_id']) {
+                    $errors['company_id'] = 'この企業IDは既に使用済みです※重複できません';
+                }
+            }
+        }
+
+        if ($listExist && $selectOrDelete) {
+            $idList = array_column($listCompanies, 'company_id');
+            if (!in_array($company['company_id'], $idList)) {
+                $errors['company_name'] = '選択肢から選んでください';
+            }
+        }
+
+        return $errors;
+    }
+
+
 }

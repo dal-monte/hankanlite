@@ -13,6 +13,10 @@ class Controller
     protected $token;
     protected $reCaptcha;
 
+    protected $mainDatabase;
+
+    protected $companyId;
+
     public function __construct($application)
     {
         $this->request = $application->getRequest();
@@ -23,6 +27,7 @@ class Controller
         $this->convert = $application->getConvert();
         $this->token = $application->getToken();
         $this->reCaptcha = $application->getReCaptcha();
+        $this->mainDatabase = $application->getMainDatabase();
     }
 
     public function run($action)
@@ -136,9 +141,15 @@ class Controller
 
     private function judgeContractType($contract, $userId)
     {
+        if (isset($_SESSION['now_user_id'])) {
+            $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+        } else {
+            throw new HttpNotFoundException();
+        }
+
         if ($contract['contract_type'] === 'purchase') {
             $contract['purchase_contract_id'] = $contract['contract_id'];
-            $sqlPurchaseProducts = $this->databaseManager->get('PurchaseProduct');
+            $sqlPurchaseProducts = $this->databaseManager->get('PurchaseProduct', $companyId);
             $listPurchaseProducts = $sqlPurchaseProducts->fetchPurchaseProduct($contract);
             if (is_null($listPurchaseProducts)) {
                 $listPurchaseProducts = [];
@@ -151,7 +162,7 @@ class Controller
             ];
         } elseif ($contract['contract_type'] === 'sales') {
             $contract['sales_contract_id'] = $contract['contract_id'];
-            $sqlSalesProducts = $this->databaseManager->get('SalesProduct');
+            $sqlSalesProducts = $this->databaseManager->get('SalesProduct', $companyId);
             $listSalesProducts = $sqlSalesProducts->fetchSalesProduct($contract);
             if (is_null($listSalesProducts)) {
                 $listSalesProducts = [];
@@ -181,10 +192,16 @@ class Controller
 
         $token;
 
-        $sqlCategories = $this->databaseManager->get('Category');
+        if (isset($_SESSION['now_user_id'])) {
+            $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+        } else {
+            throw new HttpNotFoundException();
+        }
+
+        $sqlCategories = $this->databaseManager->get('Category', $companyId);
         $listCategories = $sqlCategories->fetchAllCategory();
 
-        $sqlProducts = $this->databaseManager->get('Product');
+        $sqlProducts = $this->databaseManager->get('Product', $companyId);
         $listProducts = $sqlProducts->fetchAllProduct();
 
         $usedCategories = array_column($listProducts, 'category_id');
@@ -197,15 +214,14 @@ class Controller
         $judgeContractType = $this->judgeContractType($contract, $userId);
         extract($judgeContractType);
 
-        // テーブルの入力欄の表示非表示コントロール
         if (isset($postData['tableEditingSelect'])) {
             $tableEditingSelect = $this->tableEditingSelect($postData, $listProducts, $listSelectedProducts);
             extract($tableEditingSelect);
         } elseif (isset($postData['tableEditingDelete'])) {
-            $tableEditingDelete = $this->tableEditingDelete($postData, $listProducts, $listSelectedProducts, $contract);
+            $tableEditingDelete = $this->tableEditingDelete($postData, $listProducts, $listSelectedProducts, $contract, $companyId);
             extract($tableEditingDelete);
         } elseif (isset($postData['tableEditingUpdate'])) {
-            $tableEditingUpdate = $this->tableEditingUpdate($postData, $contract, $listSelectedProducts);
+            $tableEditingUpdate = $this->tableEditingUpdate($postData, $contract, $listSelectedProducts, $companyId);
             extract($tableEditingUpdate);
         } elseif (isset($postData['tableIncreaseSearch'])) {
             $tableIncreaseSearch = $this->tableIncreaseSearch($postData, $listProducts, $listCategories);
@@ -214,7 +230,7 @@ class Controller
             $tableIncreaseSelect = $this->tableIncreaseSelect($postData, $listProducts, $contract, $listSelectedProducts);
             extract($tableIncreaseSelect);
         } elseif (isset($postData['tableIncrease'])) {
-            $tableIncrease = $this->tableIncrease($postData, $contract);
+            $tableIncrease = $this->tableIncrease($postData, $contract, $companyId);
             extract($tableIncrease);
         }
 
@@ -235,9 +251,9 @@ class Controller
     {
         $errors['editingTable'] = [];
 
+        // POSTに選択した商品名が存在していて、正しい形式である場合にバリデーションをかける
         $checkExistProduct = isset($postData['product_name']);
         $checkCorrectnessProduct = strpos($postData['product_name'], '@');
-
         if ($checkExistProduct && $checkCorrectnessProduct) {
             $product['product_id'] = strstr($postData['product_name'], '@', true);
             $product['product_name'] = substr(strstr($postData['product_name'], '@', false), 1);
@@ -277,7 +293,7 @@ class Controller
         ];
     }
 
-    private function tableEditingDelete($postData, $listProducts, $listSelectedProducts, $contract)
+    private function tableEditingDelete($postData, $listProducts, $listSelectedProducts, $contract, $companyId)
     {
         $errors['editingTable'] = [];
 
@@ -295,20 +311,20 @@ class Controller
 
         if (!count($errors['editingTable'])) {
 
+            // 削除する契約に含まれていた商品毎の個数を変数に入れて契約削除と在庫個数調整を行う
             foreach ($listSelectedProducts as $listSelectedProduct) {
                 if ((int)$product['product_id'] === $listSelectedProduct['product_id']) {
                     $editingProduct = $listSelectedProduct;
                 }
             }
-
             if ($contract['contract_type'] === 'purchase') {
-                $sqlPurchaseProducts = $this->databaseManager->get('PurchaseProduct');
-                $sqlStock = $this->databaseManager->get('Stock');
+                $sqlPurchaseProducts = $this->databaseManager->get('PurchaseProduct', $companyId);
+                $sqlStock = $this->databaseManager->get('Stock', $companyId);
                 $sqlPurchaseProducts->delete($editingProduct);
                 $sqlStock->decrease($editingProduct);
             } elseif ($contract['contract_type'] === 'sales') {
-                $sqlSalesProducts = $this->databaseManager->get('SalesProduct');
-                $sqlStock = $this->databaseManager->get('Stock');
+                $sqlSalesProducts = $this->databaseManager->get('SalesProduct', $companyId);
+                $sqlStock = $this->databaseManager->get('Stock', $companyId);
                 $sqlSalesProducts->delete($editingProduct);
                 $sqlStock->increase($editingProduct);
             }
@@ -326,7 +342,7 @@ class Controller
         ];
     }
 
-    private function tableEditingUpdate($postData, $contract, $listSelectedProducts)
+    private function tableEditingUpdate($postData, $contract, $listSelectedProducts, $companyId)
     {
         $errors['editingTable'] = [];
 
@@ -361,23 +377,22 @@ class Controller
 
         if (!count($errors['editingTable'])) {
 
+            // 契約の内容変更する前と後の商品名と商品毎の個数変化を変数に入れて商品増減と在庫個数調整を行う
             foreach ($listSelectedProducts as $listSelectedProduct) {
                 if ($listSelectedProduct['product_id'] === $editingProduct['product_id']) {
                     $selectedProduct = $listSelectedProduct;
                 }
             }
-
             $updateStock['number'] = $editingProduct['number'] - $selectedProduct['number'];
-
             if ($contract['contract_type'] === 'purchase') {
-                $sqlPurchaseProducts = $this->databaseManager->get('PurchaseProduct');
-                $sqlStock = $this->databaseManager->get('Stock');
+                $sqlPurchaseProducts = $this->databaseManager->get('PurchaseProduct', $companyId);
+                $sqlStock = $this->databaseManager->get('Stock', $companyId);
                 $sqlPurchaseProducts->update($editingProduct);
                 $updateStock['product_id'] = $editingProduct['product_id'];
                 $sqlStock->increase($updateStock);
             } elseif ($contract['contract_type'] === 'sales') {
-                $sqlSalesProducts = $this->databaseManager->get('SalesProduct');
-                $sqlStock = $this->databaseManager->get('Stock');
+                $sqlSalesProducts = $this->databaseManager->get('SalesProduct', $companyId);
+                $sqlStock = $this->databaseManager->get('Stock', $companyId);
                 $sqlSalesProducts->update($editingProduct);
                 $updateStock['product_id'] = $editingProduct['product_id'];
                 $sqlStock->decrease($updateStock);
@@ -422,6 +437,7 @@ class Controller
 
         if (!count($errors['increaseTable'])) {
             $tableOutput['product'] = $category;
+
             foreach ($listProducts as $listProduct) {
                 if ($category['category_id'] === $listProduct['category_id']) {
                     $checkedProducts[] = $listProduct;
@@ -516,7 +532,7 @@ class Controller
         ];
     }
 
-    private function tableIncrease($postData, $contract)
+    private function tableIncrease($postData, $contract, $companyId)
     {
         $errors['increaseTable'] = [];
 
@@ -551,13 +567,13 @@ class Controller
 
         if (!count($errors['increaseTable'])) {
             if ($contract['contract_type'] === 'purchase') {
-                $sqlPurchaseProducts = $this->databaseManager->get('PurchaseProduct');
-                $sqlStock = $this->databaseManager->get('Stock');
+                $sqlPurchaseProducts = $this->databaseManager->get('PurchaseProduct', $companyId);
+                $sqlStock = $this->databaseManager->get('Stock', $companyId);
                 $sqlPurchaseProducts->insert($increaseProduct);
                 $sqlStock->increase($increaseProduct);
             } elseif ($contract['contract_type'] === 'sales') {
-                $sqlSalesProducts = $this->databaseManager->get('SalesProduct');
-                $sqlStock = $this->databaseManager->get('Stock');
+                $sqlSalesProducts = $this->databaseManager->get('SalesProduct', $companyId);
+                $sqlStock = $this->databaseManager->get('Stock', $companyId);
                 $sqlSalesProducts->insert($increaseProduct);
                 $sqlStock->decrease($increaseProduct);
             }

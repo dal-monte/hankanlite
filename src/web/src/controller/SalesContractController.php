@@ -26,11 +26,22 @@ class SalesContractController extends Controller
 
         $table = '';
 
-        $sqlCustomers = $this->databaseManager->get('Customer');
+        if (isset($_SESSION['now_user_id'])) {
+        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+        } else {
+            throw new HttpNotFoundException();
+        }
+
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlCustomers = $this->databaseManager->get('Customer', $companyId);
+        // カテゴリー選択フォーム用データ取り出し
         $listCustomers = $sqlCustomers->fetchAllCustomer();
 
-        $sqlSalesContracts = $this->databaseManager->get('SalesContract');
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlSalesContracts = $this->databaseManager->get('SalesContract', $companyId);
+        // カテゴリー選択フォーム用データ取り出し
         $listSalesContracts = $sqlSalesContracts->fetchAllSalesContract();
+        // 表にデータを挿入
         $this->convert->convertJson($listSalesContracts, 'salesContract');
 
         return $this->render([
@@ -64,27 +75,38 @@ class SalesContractController extends Controller
 
         $table = '';
         $selector = '';
+        $contract = null;
 
-        $sqlCustomers = $this->databaseManager->get('Customer');
-        $listCustomers = $sqlCustomers->fetchAllCustomer();
-
-        $sqlSalesContracts = $this->databaseManager->get('SalesContract');
-        $listSalesContracts = $sqlSalesContracts->fetchAllSalesContract();
-        $this->convert->convertJson($listSalesContracts, 'salesContract');
-
-        if (isset($_POST['customer_name'])) {
-            if (strpos($_POST['customer_name'], '@')) {
-                $customer['customer_id'] = strstr($_POST['customer_name'], '@', true);
-                $customer['customer_name'] = substr(strstr($_POST['customer_name'], '@', false), 1);
-                $errors['increase'] = $errors['increase'] + $this->validate->customerValidate($customer, $listCustomers, 'select');
-            } else {
-                $errors['increase']['customer_name'] = '選択肢から選んでください';
-            }
+        if (isset($_SESSION['now_user_id'])) {
+        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
         } else {
             throw new HttpNotFoundException();
         }
 
-        if (isset($_POST['sales_id'])) {
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlCustomers = $this->databaseManager->get('Customer', $companyId);
+        // カテゴリー選択フォーム用データ取り出し
+        $listCustomers = $sqlCustomers->fetchAllCustomer();
+
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlSalesContracts = $this->databaseManager->get('SalesContract', $companyId);
+        // カテゴリー選択フォーム用データ取り出し
+        $listSalesContracts = $sqlSalesContracts->fetchAllSalesContract();
+
+        // POSTデータが「ID＠名前」となっているので＠マークの前後を分けて変数に入れてバリデーション
+        if (!isset($_POST['customer_name'])) {
+            throw new HttpNotFoundException();
+        }
+
+        if (strpos($_POST['customer_name'], '@')) {
+            $customer['customer_id'] = strstr($_POST['customer_name'], '@', true);
+            $customer['customer_name'] = substr(strstr($_POST['customer_name'], '@', false), 1);
+            $errors['increase'] = $errors['increase'] + $this->validate->customerValidate($customer, $listCustomers, 'select');
+        } else {
+            $errors['increase']['customer_name'] = '選択肢から選んでください';
+        }
+
+        if (isset($_POST['sales_id']) && $_POST['sales_id'] ==! "") {
             $contract = [
                 'contract_id' => trim($_POST['sales_id']),
                 'customer_id' => $customer['customer_id'],
@@ -94,8 +116,13 @@ class SalesContractController extends Controller
             $errors['increase'] = $errors['increase'] + $this->validate->contractValidate($contract, $listSalesContracts, 'increase');
             $selector = 'disabled';
         } else {
-            throw new HttpNotFoundException();
+            $errors['increase']['purchase_id'] = '契約番号を入力して下さい';
         }
+
+        // カテゴリー選択フォーム用データ取り出し
+        $listSalesContracts = $sqlSalesContracts->fetchAllSalesContract();
+        // 表にデータを挿入
+        $this->convert->convertJson($listSalesContracts, 'salesContract');
 
         $increaseFieldset = '';
 
@@ -198,11 +225,22 @@ class SalesContractController extends Controller
         $editingSearchFieldset = '';
         $editingSession = 'show';
 
-        $sqlCustomers = $this->databaseManager->get('Customer');
+        if (isset($_SESSION['now_user_id'])) {
+        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+        } else {
+            throw new HttpNotFoundException();
+        }
+
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlCustomers = $this->databaseManager->get('Customer', $companyId);
+        // カテゴリー選択フォーム用データ取り出し
         $listCustomers = $sqlCustomers->fetchAllCustomer();
 
-        $sqlSalesContracts = $this->databaseManager->get('SalesContract');
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlSalesContracts = $this->databaseManager->get('SalesContract', $companyId);
+        // カテゴリー選択フォーム用データ取り出し
         $listSalesContracts = $sqlSalesContracts->fetchAllSalesContract();
+        // 表にデータを挿入
         $this->convert->convertJson($listSalesContracts, 'salesContract');
 
         if (isset($_POST['search'])) {
@@ -212,7 +250,7 @@ class SalesContractController extends Controller
             $editingSelect = $this->editingSelect($listSalesContracts, $userId, $token);
             extract($editingSelect);
         } elseif (isset($_POST['delete'])) {
-            $editingDelete = $this->editingDelete($listSalesContracts, $sqlSalesContracts);
+            $editingDelete = $this->editingDelete($listSalesContracts, $sqlSalesContracts, $companyId);
             extract($editingDelete);
         } else {
             $editingElse   = $this->editingElse();
@@ -300,6 +338,7 @@ class SalesContractController extends Controller
             throw new HttpNotFoundException();
         }
 
+        // POSTデータが「ID＠名前」となっているので＠マークの前後を分けて変数に入れてバリデーション
         if (strpos($_POST['customer_name'], '@')) {
             $contract['customer_id'] = strstr($_POST['customer_name'], '@', true);
             $contract['customer_name'] = substr(strstr($_POST['customer_name'], '@', false), 1);
@@ -312,10 +351,12 @@ class SalesContractController extends Controller
         if (!count($errors['editing'])) {
             $selector = 'disabled';
             $_SESSION['salesEditing'] = $contract;
-            foreach ($listSalesContracts as $listSalesContracts) {
-                if ($contract['customer_id'] === $listSalesContracts['customer_id']) {
-                    $listSalesContracts['contract_id'] = $listSalesContracts['sales_contract_id'];
-                    $checkedSalesContracts[] = $listSalesContracts;
+
+            // フォーム内の契約ID欄用に選択業社の契約を抽出し変数に入れる
+            foreach ($listSalesContracts as $listSalesContract) {
+                if ($contract['customer_id'] === $listSalesContract['customer_id']) {
+                    $listSalesContract['contract_id'] = $listSalesContract['sales_contract_id'];
+                    $checkedSalesContracts[] = $listSalesContract;
                 }
             }
             $listSalesContracts = $checkedSalesContracts;
@@ -387,7 +428,7 @@ class SalesContractController extends Controller
         ];
     }
 
-    private function editingDelete($listSalesContracts, $sqlSalesContracts)
+    private function editingDelete($listSalesContracts, $sqlSalesContracts, $companyId)
     {
         $table = '';
         $selector = '';
@@ -408,6 +449,7 @@ class SalesContractController extends Controller
             throw new HttpNotFoundException();
         }
 
+        // 選択業社に既存の契約が存在するかのバリデーション
         foreach ($listSalesContracts as $listSalesContracts) {
             if ($contract['customer_id'] === $listSalesContracts['customer_id']) {
                 $listSalesContracts['contract_id'] = $listSalesContracts['sales_contract_id'];
@@ -416,15 +458,17 @@ class SalesContractController extends Controller
         }
         $listSalesContracts = $checkedSalesContracts;
         $errors['editing'] = $errors['editing'] + $this->validate->contractValidate($contract, $listSalesContracts, 'select');
+
         if (!count($errors['editing'])) {
             $contract['sales_contract_id'] = $contract['contract_id'];
-            $sqlSalesProducts = $this->databaseManager->get('SalesProduct');
-            $listSalesProducts = $sqlSalesProducts->fetchSalesProduct($contract);
 
+            // 契約の削除に伴う商品在庫数の調整
+            $sqlSalesProducts = $this->databaseManager->get('SalesProduct', $companyId);
+            $listSalesProducts = $sqlSalesProducts->fetchSalesProduct($contract);
             foreach ($listSalesProducts as $listSalesProduct) {
                 $salesStocks[$listSalesProduct['product_id']] = $listSalesProduct['number'];
             }
-            $sqlStock = $this->databaseManager->get('Stock');
+            $sqlStock = $this->databaseManager->get('Stock', $companyId);
             $sqlStock->increaseMulti($salesStocks);
 
             unset($_SESSION["salesEditing"]);

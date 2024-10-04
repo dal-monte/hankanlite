@@ -6,7 +6,7 @@ class Library
 
     public $navbarName = [
         "not" => [],
-        "root" => ["products", "sales", "purchases", "users"],
+        "root" => ["companies"],
         "admin" => ["products", "sales", "purchases", "users"],
         "salesWorker" => ["products", "sales"],
         "purchaseWorker" => ["products", "purchases"]
@@ -46,5 +46,8 @@ class Library
         '/user' => ['controller' => 'user', 'action' => 'index'],
         '/user/increase' => ['controller' => 'user', 'action' => 'increase'],
         '/user/editing' => ['controller' => 'user', 'action' => 'editing'],
+        '/company' => ['controller' => 'company', 'action' => 'index'],
+        '/company/increase' => ['controller' => 'company', 'action' => 'increase'],
+        '/company/editing' => ['controller' => 'company', 'action' => 'editing'],
     ];
 }

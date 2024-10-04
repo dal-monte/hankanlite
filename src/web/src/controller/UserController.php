@@ -15,12 +15,25 @@ class UserController extends Controller
             unset($_SESSION['user_name']);
         }
 
-        $sqlUsers = $this->databaseManager->get('User');
-        // // mysqlのUsersテーブルの内容をfetch_allしてjsonファイルにエクスポート
-        $listUsers = $sqlUsers->fetchUser();
+        if (isset($_SESSION['now_user_id'])) {
+        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+        } else {
+            throw new HttpNotFoundException();
+        }
+
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlUsers = $this->databaseManager->get('User', $this->mainDatabase);
+
+        $searchUsers = $companyId . '%';
+
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $listUsers = $sqlUsers->fetchUser($searchUsers);
+        // 表にデータを挿入
         $this->convert->convertJson($listUsers, 'user');
 
-        $sqlRoles = $this->databaseManager->get('Role');
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlRoles = $this->databaseManager->get('Role', $this->mainDatabase);
+        // カテゴリー選択フォーム用データ取り出し
         $listRoles = $sqlRoles->fetchRole();
 
         return $this->render([
@@ -29,6 +42,7 @@ class UserController extends Controller
             'users' => $listUsers,
             'roles' => $listRoles,
             'token' => $token,
+            'companyId' => $companyId,
         ]);
     }
 
@@ -50,10 +64,12 @@ class UserController extends Controller
 
         $increaseSession = 'show';
 
-        // modelsディレクトリのUserクラスをnewして$sqlUserに渡す
-        $sqlUsers = $this->databaseManager->get('User');
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlUsers = $this->databaseManager->get('User', $this->mainDatabase);
 
-        $sqlRoles = $this->databaseManager->get('Role');
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlRoles = $this->databaseManager->get('Role', $this->mainDatabase);
+        // カテゴリー選択フォーム用データ取り出し
         $listRoles = $sqlRoles->fetchRole();
 
         if (isset($_POST['user_id']) && isset($_POST['user_name'])) {
@@ -80,9 +96,20 @@ class UserController extends Controller
             throw new HttpNotFoundException();
         }
 
-        $listUsers = $sqlUsers->fetchUser();
+        $user['user_id_before'] = $user['user_id'];
+
+        if (isset($_SESSION['now_user_id'])) {
+        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+        } else {
+            throw new HttpNotFoundException();
+        }
+
+        $user['user_id'] = $companyId . $user['user_id_before'];
+        $checkCompanyUsers = $companyId . '%';
+        $listUsers = $sqlUsers->fetchUser($checkCompanyUsers);
         $errors['increase'] = $errors['increase'] + $this->validate->userValidate($user, $listUsers, 'increase');
 
+        // POSTデータが「ID＠名前」となっているので＠マークの前後を分けて変数に入れてバリデーション
         if (strpos($_POST['role'], '@')) {
             $user['role_id'] = strstr($_POST['role'], '@', true);
             $user['role_name'] = substr(strstr($_POST['role'], '@', false), 1);
@@ -97,12 +124,16 @@ class UserController extends Controller
             $sqlUsers->insert($user);
             $user = [];
             $increaseSession = '';
-            $listUsers = $sqlUsers->fetchUser();
-            $this->convert->convertJson($listUsers, 'user');
         } else {
             $user['password'] = '';
             $user['password_again'] = '';
+            $user['user_id'] = $user['user_id_before'];
         }
+
+        // カテゴリー選択フォーム用データ取り出し
+        $listUsers = $sqlUsers->fetchUser($checkCompanyUsers);
+        // 表にデータを挿入
+        $this->convert->convertJson($listUsers, 'user');
 
         return $this->render([
             'title' => '社員の登録',
@@ -112,6 +143,7 @@ class UserController extends Controller
             'increaseUser' => $user,
             'increaseSession' => $increaseSession,
             'token' => $token,
+            'companyId' => $companyId,
         ], 'index');
     }
 
@@ -121,25 +153,34 @@ class UserController extends Controller
 
         $token = $this->securityCheck("users");
 
-        // modelsディレクトリのUserクラスをnewして$sqlUserに渡す
-        $sqlUsers = $this->databaseManager->get('User');
-
         if (isset($_POST['user_name'])) {
             $postUser['user_name'] = trim($_POST['user_name']);
         } else {
             throw new HttpNotFoundException();
         }
 
-        // // mysqlのcategoriesテーブルの内容をfetch_allしてjsonファイルにエクスポート
-        $listUsers = $sqlUsers->fetchUser();
-        $this->convert->convertJson($listUsers, 'user');
+        if (isset($_SESSION['now_user_id'])) {
+        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+        } else {
+            throw new HttpNotFoundException();
+        }
 
-        $sqlRoles = $this->databaseManager->get('Role');
+        $checkCompanyUsers = $companyId . '%';
+
+        // modelsディレクトリのUserクラスをnewして$sqlUserに渡す
+        $sqlUsers = $this->databaseManager->get('User', $this->mainDatabase);
+        // カテゴリー選択フォーム用データ取り出し
+        $listUsers = $sqlUsers->fetchUser($checkCompanyUsers);
+
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlRoles = $this->databaseManager->get('Role', $this->mainDatabase);
+        // カテゴリー選択フォーム用データ取り出し
         $listRoles = $sqlRoles->fetchRole();
 
         $editingSession = '';
         $editingFieldset = 'disabled';
         $selectFieldset = '';
+
         if (isset($_POST['select'])) {
             $editingSelect = $this->editingSelect($postUser, $listUsers);
             extract($editingSelect);
@@ -154,6 +195,11 @@ class UserController extends Controller
             extract($editingElse);
         }
 
+        // カテゴリー選択フォーム用データ取り出し
+        $listUsers = $sqlUsers->fetchUser($checkCompanyUsers);
+        // 表にデータを挿入
+        $this->convert->convertJson($listUsers, 'user');
+
         return $this->render([
             'title' => '社員の登録',
             'errors' => $errors,
@@ -164,6 +210,7 @@ class UserController extends Controller
             'editingFieldset' => $editingFieldset,
             'selectFieldset' => $selectFieldset,
             'token' => $token,
+            'companyId' => $companyId,
         ], 'index');
     }
 
@@ -175,8 +222,10 @@ class UserController extends Controller
         $errors['editing'] = [];
 
         $editingSession = 'show';
+
+        // POSTデータが「ID＠名前」となっているので＠マークの前後を分けて変数に入れてバリデーション
         if (strpos($postUser['user_name'], '@')) {
-            $user['user_id'] = strstr($postUser['user_name'], '@', true);
+            $user['user_id'] = (int)strstr($postUser['user_name'], '@', true);
             $user['name'] = substr(strstr($postUser['user_name'], '@', false), 1);
             $errors['editing'] = $errors['editing'] + $this->validate->userValidate($user, $listUsers, 'select');
         } else {
@@ -232,8 +281,9 @@ class UserController extends Controller
             throw new HttpNotFoundException();
         }
 
+        // POSTデータが「ID＠名前」となっているので＠マークの前後を分けて変数に入れてバリデーション
         if (strpos($postUser['role'], '@')) {
-            $user['role_id'] = strstr($postUser['role'], '@', true);
+            $user['role_id'] = (int)strstr($postUser['role'], '@', true);
             $user['role_name'] = substr(strstr($postUser['role'], '@', false), 1);
             $errors['editing'] = $errors['editing'] + $this->validate->roleValidate($user, $listRoles);
         } else {
@@ -241,19 +291,19 @@ class UserController extends Controller
         }
 
         $errors['editing'] = $errors['editing'] + $this->validate->userValidate($user, $listUsers, 'update');
+
         if (!count($errors['editing'])) {
             $sqlUsers->update($user);
             $user = [];
             unset($_SESSION['user_name']);
             unset($_SESSION['user_id']);
-            $listUsers = $sqlUsers->fetchUser();
-            $this->convert->convertJson($listUsers, 'user');
         } else {
             $user['name'] = $_SESSION['user_name'];
             $editingSession = 'show';
             $editingFieldset = '';
             $selectFieldset = 'disabled';
         }
+
         return [
             'editingSession' => $editingSession,
             'editingFieldset' => $editingFieldset,
@@ -271,9 +321,16 @@ class UserController extends Controller
         $selectFieldset = '';
         $errors['editing'] = [];
 
+        // POSTデータが「ID＠名前」となっているので＠マークの前後を分けて変数に入れてバリデーション
         if (strpos($postUser['user_name'], '@')) {
-            $user['user_id'] = strstr($postUser['user_name'], '@', true);
+            $user['user_id'] = (int)(strstr($postUser['user_name'], '@', true));
             $user['name'] = substr(strstr($postUser['user_name'], '@', false), 1);
+            foreach ($listUsers as $listUser) {
+                if ($user['user_id'] === $listUser['user_id']) {
+                    $user['role_id'] = $listUser['role_id'];
+                    $user['role_name'] = $listUser['role'];
+                }
+            }
             $errors['editing'] = $errors['editing'] + $this->validate->userValidate($user, $listUsers, 'delete');
         } else {
             $errors['editing']['user_name'] = '選択肢から選んでください';
@@ -282,8 +339,6 @@ class UserController extends Controller
         if (!count($errors['editing'])) {
             $user['user_name'] = $user['name'];
             $sqlUsers->delete($user);
-            $listUsers = $sqlUsers->fetchUser();
-            $this->convert->convertJson($listUsers, 'user');
             $user = [];
         } else {
             $editingSession = 'show';

@@ -15,9 +15,17 @@ class CategoryController extends Controller
             unset($_SESSION['category_name']);
         }
 
-        $sqlCategories = $this->databaseManager->get('Category');
-        // // mysqlのcategoriesテーブルの内容をfetch_allしてjsonファイルにエクスポート
+        if (isset($_SESSION['now_user_id'])) {
+        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+        } else {
+            throw new HttpNotFoundException();
+        }
+
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlCategories = $this->databaseManager->get('Category', $companyId);
+        // カテゴリー選択フォーム用データ取り出し
         $listCategories = $sqlCategories->fetchAllCategory();
+        // 表にデータを挿入
         $this->convert->convertJson($listCategories, 'category');
 
         return $this->render([
@@ -51,10 +59,15 @@ class CategoryController extends Controller
             throw new HttpNotFoundException();
         }
 
-        // modelsディレクトリのCategoryクラスをnewして$sqlCategoriesに渡す
-        $sqlCategories = $this->databaseManager->get('Category');
+        if (isset($_SESSION['now_user_id'])) {
+            $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+        } else {
+            throw new HttpNotFoundException();
+        }
 
-        // dbのカテゴリーをfetchAllする
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlCategories = $this->databaseManager->get('Category', $companyId);
+        // カテゴリー選択フォーム用データ取り出し
         $listCategories = $sqlCategories->fetchAllCategory();
 
         $errors['increase'] = $errors['increase'] + $this->validate->categoryValidate($category, $listCategories, 'increase');
@@ -65,8 +78,9 @@ class CategoryController extends Controller
             $increase = '';
         }
 
-        // // mysqlのcategoriesテーブルの内容をfetch_allしてjsonファイルにエクスポート
+        // カテゴリー選択フォーム用データ取り出し
         $listCategories = $sqlCategories->fetchAllCategory();
+        // 表にデータを挿入
         $this->convert->convertJson($listCategories, 'category');
 
         return $this->render([
@@ -85,32 +99,38 @@ class CategoryController extends Controller
 
         $token = $this->securityCheck("products");
 
-        // modelsディレクトリのCategoryクラスをnewして$sqlCategoriesに渡す
-        $sqlCategories = $this->databaseManager->get('Category');
-
         if (isset($_POST['category_name'])) {
             $postCategory['category_name'] = trim($_POST['category_name']);
         } else {
             throw new HttpNotFoundException();
         }
 
-        // // mysqlのcategoriesテーブルの内容をfetch_allしてjsonファイルにエクスポート
-        $listCategories = $sqlCategories->fetchAllCategory();
-        $this->convert->convertJson($listCategories, 'category');
+        if (isset($_SESSION['now_user_id'])) {
+        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+        } else {
+            throw new HttpNotFoundException();
+        }
 
         if (isset($_POST['select'])) {
-            $editingSelect = $this->editingSelect($postCategory, $listCategories);
+            $editingSelect = $this->editingSelect($postCategory, $companyId);
             extract($editingSelect);
         } elseif (isset($_POST['update'])) {
-            $editingUpdate = $this->editingUpdate($postCategory, $listCategories, $sqlCategories);
+            $editingUpdate = $this->editingUpdate($postCategory, $companyId);
             extract($editingUpdate);
         } elseif (isset($_POST['delete'])) {
-            $editingDelete = $this->editingDelete($postCategory, $listCategories, $sqlCategories);
+            $editingDelete = $this->editingDelete($postCategory, $companyId);
             extract($editingDelete);
         } else {
             $editingElse   = $this->editingElse();
             extract($editingElse);
         }
+
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlCategories = $this->databaseManager->get('Category', $companyId);
+        // カテゴリー選択フォーム用データ取り出し
+        $listCategories = $sqlCategories->fetchAllCategory();
+        // 表にデータを挿入
+        $this->convert->convertJson($listCategories, 'category');
 
         return $this->render([
             'title' => 'カテゴリー',
@@ -124,15 +144,21 @@ class CategoryController extends Controller
         ], 'index');
     }
 
-    private function editingSelect($postCategory, $listCategories)
+    private function editingSelect($postCategory, $companyId)
     {
         $errors['editing'] = [];
         $editing = 'show';
         $editingFieldset = 'disabled';
         $selectFieldset = '';
 
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlCategories = $this->databaseManager->get('Category', $companyId);
+        // カテゴリー選択フォーム用データ取り出し
+        $listCategories = $sqlCategories->fetchAllCategory();
+
+        // POSTデータが「ID＠名前」となっているので＠マークの前後を分けて変数に入れてバリデーション
         if (strpos($postCategory['category_name'], '@')) {
-            $category['category_id'] = strstr($postCategory['category_name'], '@', true);
+            $category['category_id'] = (int)strstr($postCategory['category_name'], '@', true);
             $category['category_name'] = substr(strstr($postCategory['category_name'], '@', false), 1);
             $errors['editing'] = $errors['editing'] + $this->validate->categoryValidate($category, $listCategories, 'select');
         } else {
@@ -157,7 +183,7 @@ class CategoryController extends Controller
         ];
     }
 
-    private function editingUpdate($postCategory, $listCategories, $sqlCategories)
+    private function editingUpdate($postCategory, $companyId)
     {
         $errors['editing'] = [];
         $editing = '';
@@ -171,14 +197,19 @@ class CategoryController extends Controller
         } else {
             throw new HttpNotFoundException();
         }
+
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlCategories = $this->databaseManager->get('Category', $companyId);
+        // カテゴリー選択フォーム用データ取り出し
+        $listCategories = $sqlCategories->fetchAllCategory();
+
         $errors['editing'] = $errors['editing'] + $this->validate->categoryValidate($category, $listCategories, 'update');
+
         if (!count($errors['editing'])) {
             $sqlCategories->update($category);
             $category = [];
             unset($_SESSION['category_name']);
             unset($_SESSION['category_id']);
-            $listCategories = $sqlCategories->fetchAllCategory();
-            $this->convert->convertJson($listCategories, 'category');
         } else {
             $category['category_name'] = $_SESSION['category_name'];
             $editing = 'show';
@@ -196,19 +227,32 @@ class CategoryController extends Controller
         ];
     }
 
-    private function editingDelete($postCategory, $listCategories, $sqlCategories)
+    private function editingDelete($postCategory, $companyId)
     {
         $errors['editing'] = [];
         $editing = '';
         $editingFieldset = 'disabled';
         $selectFieldset = '';
+        $category = null;
 
+        if (isset($_SESSION['now_user_id'])) {
+        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+        } else {
+            throw new HttpNotFoundException();
+        }
+
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlCategories = $this->databaseManager->get('Category', $companyId);
+        // カテゴリー選択フォーム用データ取り出し
+        $listCategories = $sqlCategories->fetchAllCategory();
+
+        // POSTデータが「ID＠名前」となっているので＠マークの前後を分けて変数に入れてバリデーション
         if (strpos($postCategory['category_name'], '@')) {
-            $category['category_id'] = strstr($postCategory['category_name'], '@', true);
+            $category['category_id'] = (int)strstr($postCategory['category_name'], '@', true);
             $category['category_name'] = substr(strstr($postCategory['category_name'], '@', false), 1);
             $errors['editing'] = $errors['editing'] + $this->validate->categoryValidate($category, $listCategories, 'delete');
 
-            $sqlProduct = $this->databaseManager->get('Product');
+            $sqlProduct = $this->databaseManager->get('Product', $companyId);
             $busyCategory = $sqlProduct->searchProducts($category['category_id']);
             $boolBusyCategory = !empty($busyCategory);
             if ($boolBusyCategory) {
@@ -220,8 +264,6 @@ class CategoryController extends Controller
 
         if (!count($errors['editing'])) {
             $sqlCategories->delete($category);
-            $listCategories = $sqlCategories->fetchAllCategory();
-            $this->convert->convertJson($listCategories, 'category');
             $category = [];
         } else {
             $editing = 'show';
