@@ -44,17 +44,21 @@ $link = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-ico
                     <div class="row mt-3">
                         <label for="user_id" class="col-form-label">社員番号</label>
                         <div class="col-auto">
-                            <input value="<?php if (isset($increaseUser['user_id'])) : echo escape($increaseUser['user_id']);
-                                            endif; ?>" type="text" id="user_id" name="user_id" class="form-control" aria-labelledby="idCaution" inputmode="numeric">
+                            <div class="input-group">
+                                <span class="input-group-text"><?php if (isset($companyId)) : echo escape($companyId); else : echo '企業番号';
+                                                    endif; ?></span>
+                                <input value="<?php if (isset($increaseUser['user_id'])) : echo escape($increaseUser['user_id']);
+                                                endif; ?>" type="text" id="user_id" name="user_id" class="form-control" aria-labelledby="idCaution" inputmode="numeric">
+                            </div>
                         </div>
                         <div class="col-auto">
                             <span id="idCaution" class="form-text">
-                                社員番号は4桁の半角数字で入力して下さい。
+                                社員番号は「企業番号4桁 + 4桁の半角数字」の8桁です。 下4桁を入力して下さい。
                             </span>
                         </div>
                         <label for="user_name" class="col-form-label mt-3">社員名</label>
                         <div class="col-auto">
-                            <input value="<?php if (isset($increaseUser['user_id'])) : echo escape($increaseUser['user_id']);
+                            <input value="<?php if (isset($increaseUser['user_name'])) : echo escape($increaseUser['user_name']);
                                             endif; ?>" type="text" id="user_name" name="user_name" class="form-control" aria-labelledby="nameCaution">
                         </div>
                         <div class="col-auto">

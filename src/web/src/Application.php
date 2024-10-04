@@ -13,6 +13,9 @@ class Application
     protected $convert;
     protected $token;
     protected $reCaptcha;
+    protected $sqlCommand;
+
+    protected $mainDatabase;
 
     public function __construct()
     {
@@ -25,15 +28,18 @@ class Application
         $this->convert = new Convert();
         $this->token = new Token();
         $this->reCaptcha = new reCaptcha();
+        $this->sqlCommand = new sqlCommand();
         $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
         $dotenv->load();
+        $this->mainDatabase = $_ENV['DB_DATABASE'];
         $this->databaseManager->connect(
             [
                 'hostname' => $_ENV['DB_HOST'],
                 'username' => $_ENV['DB_USERNAME'],
                 'password' => $_ENV['DB_PASSWORD'],
-                'database' => $_ENV['DB_DATABASE'],
-            ]
+                // 'database' => $_ENV['DB_DATABASE'],
+            ],
+            $this->sqlCommand,
         );
         $this->reCaptcha->connect(
             [
@@ -94,6 +100,16 @@ class Application
     public function getToken()
     {
         return $this->token;
+    }
+
+        public function getMainDatabase()
+    {
+        return $this->mainDatabase;
+    }
+
+    public function newTable()
+    {
+        return $this->sqlCommand;
     }
 
     private function runAction($controllerName, $action)

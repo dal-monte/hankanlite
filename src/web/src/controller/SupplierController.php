@@ -15,9 +15,17 @@ class SupplierController extends Controller
             unset($_SESSION['supplier_name']);
         }
 
-        $sqlSuppliers = $this->databaseManager->get('Supplier');
-        // // mysqlのSuppliersテーブルの内容をfetch_allしてjsonファイルにエクスポート
+        if (isset($_SESSION['now_user_id'])) {
+        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+        } else {
+            throw new HttpNotFoundException();
+        }
+
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlSuppliers = $this->databaseManager->get('Supplier', $companyId);
+        // カテゴリー選択フォーム用データ取り出し
         $listSuppliers = $sqlSuppliers->fetchAllSupplier();
+        // 表にデータを挿入
         $this->convert->convertJson($listSuppliers, 'supplier');
 
         return $this->render([
@@ -45,9 +53,6 @@ class SupplierController extends Controller
 
         $increase = 'show';
 
-        // modelsディレクトリのSupplierクラスをnewして$sqlSuppliersに渡す
-        $sqlSuppliers = $this->databaseManager->get('Supplier');
-
         if (isset($_POST['supplier_id'])) {
             $supplier['supplier_id'] = trim($_POST['supplier_id']);
         } else {
@@ -60,16 +65,29 @@ class SupplierController extends Controller
             throw new HttpNotFoundException();
         }
 
+        if (isset($_SESSION['now_user_id'])) {
+        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+        } else {
+            throw new HttpNotFoundException();
+        }
+
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlSuppliers = $this->databaseManager->get('Supplier', $companyId);
+        // カテゴリー選択フォーム用データ取り出し
         $listSuppliers = $sqlSuppliers->fetchAllSupplier();
+
         $errors['increase'] = $errors['increase'] + $this->validate->supplierValidate($supplier, $listSuppliers, 'increase');
 
         if (!count($errors['increase'])) {
             $sqlSuppliers->insert($supplier);
             $supplier = [];
             $increase = '';
-            $listSuppliers = $sqlSuppliers->fetchAllSupplier();
-            $this->convert->convertJson($listSuppliers, 'supplier');
         }
+
+        // カテゴリー選択フォーム用データ取り出し
+        $listSuppliers = $sqlSuppliers->fetchAllSupplier();
+        // 表にデータを挿入
+        $this->convert->convertJson($listSuppliers, 'supplier');
 
         return $this->render([
             'title' => 'カテゴリー',
@@ -87,17 +105,23 @@ class SupplierController extends Controller
 
         $token = $this->securityCheck("purchases");
 
-        // modelsディレクトリのSupplierクラスをnewして$sqlSuppliersに渡す
-        $sqlSuppliers = $this->databaseManager->get('Supplier');
-
         if (isset($_POST['supplier_name'])) {
             $postSupplier['supplier_name'] = trim($_POST['supplier_name']);
         } else {
             throw new HttpNotFoundException();
         }
 
-        // // mysqlのcategoriesテーブルの内容をfetch_allしてjsonファイルにエクスポート
+        if (isset($_SESSION['now_user_id'])) {
+        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+        } else {
+            throw new HttpNotFoundException();
+        }
+
+        // modelsディレクトリの対象クラスをnewして変数に渡す
+        $sqlSuppliers = $this->databaseManager->get('Supplier', $companyId);
+        // カテゴリー選択フォーム用データ取り出し
         $listSuppliers = $sqlSuppliers->fetchAllSupplier();
+        // 表にデータを挿入
         $this->convert->convertJson($listSuppliers, 'supplier');
 
         $editing = '';
@@ -136,6 +160,7 @@ class SupplierController extends Controller
         $editing = 'show';
         $errors['editing'] = [];
 
+        // POSTデータが「ID＠名前」となっているので＠マークの前後を分けて変数に入れてバリデーション
         if (strpos($postSupplier['supplier_name'], '@')) {
             $supplier['supplier_id'] = strstr($postSupplier['supplier_name'], '@', true);
             $supplier['supplier_name'] = substr(strstr($postSupplier['supplier_name'], '@', false), 1);
@@ -176,7 +201,9 @@ class SupplierController extends Controller
         } else {
             throw new HttpNotFoundException();
         }
+
         $errors['editing'] = $errors['editing'] + $this->validate->supplierValidate($supplier);
+
         if (!count($errors['editing'])) {
             $sqlSuppliers->update($supplier);
             $supplier = [];
@@ -208,12 +235,14 @@ class SupplierController extends Controller
         $editing = 'show';
         $errors['editing'] = [];
 
+        // POSTデータが「ID＠名前」となっているので＠マークの前後を分けて変数に入れてバリデーション
         if (strpos($postSupplier['supplier_name'], '@')) {
             $supplier['supplier_id'] = strstr($postSupplier['supplier_name'], '@', true);
             $supplier['name'] = substr(strstr($postSupplier['supplier_name'], '@', false), 1);
             $errors['editing'] = $errors['editing'] + $this->validate->supplierValidate($supplier, $listSuppliers, 'delete');
 
-            $sqlProduct = $this->databaseManager->get('Product');
+            $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+            $sqlProduct = $this->databaseManager->get('Product', $companyId);
             $busySupplier = $sqlProduct->searchProducts($supplier['supplier_id']);
             $boolBusySupplier = !is_null($busySupplier);
             if ($boolBusySupplier) {

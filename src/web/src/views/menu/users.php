@@ -5,6 +5,7 @@ function escape($string)
     return htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
 }
 
+$company = null;
 $body = '';
 ?>
 
@@ -102,6 +103,15 @@ $body = '';
                 <input value="<?php if (isset($token)) : echo $token;
                                 endif; ?>" type="hidden" name="token">
                 <button type="submit" class="btn btn-secondary btn-lg">社員登録・編集</button>
+
+
+                <?php if (isset($company)) : echo '
+                    <input value="<?php if (isset($token)) : echo $token;
+                                    endif; ?>" type="hidden" name="token">
+                    <button type="submit" class="btn btn-secondary btn-lg">社員登録・編集</button>
+                ' ; endif ?>
+
+
             </form>
         </div>
     </div>
