@@ -156,13 +156,6 @@ class Controller
             }
             $this->convert->convertJson($listPurchaseProducts, 'purchaseProduct', $userId);
             $listSelectedProducts = $listPurchaseProducts;
-
-            $negativeQuantities = null;
-            foreach ($listSelectedProducts as $listSelectedProduct) {
-                if ($listSelectedProduct['quantity'] < 0) {
-                    $negativeQuantities[] = $listSelectedProduct['product_name'];
-                }
-            }
         } elseif ($contract['contract_type'] === 'sales') {
             $contract['sales_contract_id'] = $contract['contract_id'];
             $sqlSalesProducts = $this->databaseManager->get('SalesProduct', $companyId);
@@ -172,15 +165,15 @@ class Controller
             }
             $this->convert->convertJson($listSalesProducts, 'salesProduct', $userId);
             $listSelectedProducts = $listSalesProducts;
-
-            $negativeQuantities = null;
-            foreach ($listSelectedProducts as $listSelectedProduct) {
-                if ($listSelectedProduct['quantity'] < 0) {
-                    $negativeQuantities[] = $listSelectedProduct['product_name'];
-                }
-            }
         } else {
             throw new HttpNotFoundException();
+        }
+
+        $negativeQuantities = null;
+        foreach ($listSelectedProducts as $listSelectedProduct) {
+            if ($listSelectedProduct['quantity'] < 0) {
+                $negativeQuantities[] = $listSelectedProduct['product_name'];
+            }
         }
 
         return [
