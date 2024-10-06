@@ -27,7 +27,7 @@ class SalesContractController extends Controller
         $table = '';
 
         if (isset($_SESSION['now_user_id'])) {
-        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+            $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
         } else {
             throw new HttpNotFoundException();
         }
@@ -78,7 +78,7 @@ class SalesContractController extends Controller
         $contract = null;
 
         if (isset($_SESSION['now_user_id'])) {
-        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+            $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
         } else {
             throw new HttpNotFoundException();
         }
@@ -106,7 +106,7 @@ class SalesContractController extends Controller
             $errors['increase']['customer_name'] = '選択肢から選んでください';
         }
 
-        if (isset($_POST['sales_id']) && $_POST['sales_id'] ==! "") {
+        if (isset($_POST['sales_id']) && $_POST['sales_id'] == ! "") {
             $contract = [
                 'contract_id' => trim($_POST['sales_id']),
                 'customer_id' => $customer['customer_id'],
@@ -226,7 +226,7 @@ class SalesContractController extends Controller
         $editingSession = 'show';
 
         if (isset($_SESSION['now_user_id'])) {
-        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+            $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
         } else {
             throw new HttpNotFoundException();
         }
@@ -340,7 +340,7 @@ class SalesContractController extends Controller
 
         // POSTデータが「ID＠名前」となっているので＠マークの前後を分けて変数に入れてバリデーション
         if (strpos($_POST['customer_name'], '@')) {
-            $contract['customer_id'] = strstr($_POST['customer_name'], '@', true);
+            $contract['customer_id'] = (int)strstr($_POST['customer_name'], '@', true);
             $contract['customer_name'] = substr(strstr($_POST['customer_name'], '@', false), 1);
             $errors['editing'] = $errors['editing'] + $this->validate->customerValidate($contract, $listCustomers, 'select');
             $errors['editing'] = $errors['editing'] + $this->validate->contractValidate($contract, $listSalesContracts, 'search');
@@ -392,7 +392,7 @@ class SalesContractController extends Controller
         }
 
         if (isset($_POST['contract_id'])) {
-            $contract['contract_id'] = $_POST['contract_id'];
+            $contract['contract_id'] = (int)trim($_POST['contract_id']);
             foreach ($listSalesContracts as $listSalesContracts) {
                 if ($contract['customer_id'] === $listSalesContracts['customer_id']) {
                     $listSalesContracts['contract_id'] = $listSalesContracts['sales_contract_id'];

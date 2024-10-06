@@ -156,10 +156,6 @@ class Controller
             }
             $this->convert->convertJson($listPurchaseProducts, 'purchaseProduct', $userId);
             $listSelectedProducts = $listPurchaseProducts;
-            return [
-                'contract' => $contract,
-                'listSelectedProducts' => $listSelectedProducts,
-            ];
         } elseif ($contract['contract_type'] === 'sales') {
             $contract['sales_contract_id'] = $contract['contract_id'];
             $sqlSalesProducts = $this->databaseManager->get('SalesProduct', $companyId);
@@ -169,21 +165,22 @@ class Controller
             }
             $this->convert->convertJson($listSalesProducts, 'salesProduct', $userId);
             $listSelectedProducts = $listSalesProducts;
-
-            $negativeQuantities = null;
-            foreach ($listSelectedProducts as $listSelectedProduct) {
-                if ($listSelectedProduct['quantity'] < 0) {
-                    $negativeQuantities[] = $listSelectedProduct['product_name'];
-                }
-            }
-            return [
-                'contract' => $contract,
-                'listSelectedProducts' => $listSelectedProducts,
-                'negativeQuantities' => $negativeQuantities,
-            ];
         } else {
             throw new HttpNotFoundException();
         }
+
+        $negativeQuantities = null;
+        foreach ($listSelectedProducts as $listSelectedProduct) {
+            if ($listSelectedProduct['quantity'] < 0) {
+                $negativeQuantities[] = $listSelectedProduct['product_name'];
+            }
+        }
+
+        return [
+            'contract' => $contract,
+            'listSelectedProducts' => $listSelectedProducts,
+            'negativeQuantities' => $negativeQuantities,
+        ];
     }
 
     protected function tableRender($actionName, $controllerName, $contract, $userId, $token, $postData = null)
@@ -250,6 +247,7 @@ class Controller
     private function tableEditingSelect($postData, $listProducts, $listSelectedProducts)
     {
         $errors['editingTable'] = [];
+        $editingProduct = null;
 
         // POSTに選択した商品名が存在していて、正しい形式である場合にバリデーションをかける
         $checkExistProduct = isset($postData['product_name']);
@@ -296,6 +294,8 @@ class Controller
     private function tableEditingDelete($postData, $listProducts, $listSelectedProducts, $contract, $companyId)
     {
         $errors['editingTable'] = [];
+
+        $product = null;
 
         $checkExistProduct = isset($postData['product_name']);
         $checkCorrectnessProduct = strpos($postData['product_name'], '@');
@@ -428,7 +428,7 @@ class Controller
 
         if ($checkExistCategory && $checkCorrectnessCategory) {
             $category['category_name'] = $postData['category_name'];
-            $category['category_id'] = strstr($category['category_name'], '@', true);
+            $category['category_id'] = (int)strstr($category['category_name'], '@', true);
             $category['category_name'] = substr(strstr($category['category_name'], '@', false), 1);
             $errors['increaseTable'] = $this->validate->categoryValidate($category, $listCategories, 'select', $listProducts);
         } else {
@@ -437,6 +437,8 @@ class Controller
 
         if (!count($errors['increaseTable'])) {
             $tableOutput['product'] = $category;
+
+            $checkedProducts = [];
 
             foreach ($listProducts as $listProduct) {
                 if ($category['category_id'] === $listProduct['category_id']) {
@@ -482,7 +484,7 @@ class Controller
 
         if ($checkExistProduct && $checkCorrectnessProduct) {
             $product['product_name'] = $postData['product_name'];
-            $product['product_id'] = strstr($product['product_name'], '@', true);
+            $product['product_id'] = (int)strstr($product['product_name'], '@', true);
             $product['product_name'] = substr(strstr($product['product_name'], '@', false), 1);
             $errors['increaseTable'] = $errors['increaseTable'] + $this->validate->productValidate($product, $listProducts, 'select');
             $errors['increaseTable'] = $errors['increaseTable'] + $this->validate->contractProductValidate($product, $listSelectedProducts, 'increase');
@@ -491,6 +493,8 @@ class Controller
         }
 
         if (!count($errors['increaseTable'])) {
+
+            $checkedProduct = [];
             foreach ($listProducts as $listProduct) {
                 if ($product['product_id'] === $listProduct['product_id']) {
                     $checkedProduct = $listProduct;
@@ -507,6 +511,8 @@ class Controller
             if (!isset($increaseProduct['product_id'])) {
                 $increaseProduct = $contract['product'];
             }
+
+            $checkedProducts = [];
             foreach ($listProducts as $listProduct) {
                 if ($increaseProduct['category_id'] === $listProduct['category_id']) {
                     $checkedProducts[] = $listProduct;

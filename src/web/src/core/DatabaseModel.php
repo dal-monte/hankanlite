@@ -87,8 +87,6 @@ class DatabaseModel
 
     public function createTables()
     {
-        $this->mysqli->query('START TRANSACTION');
-
         $this->mysqli->query('SET foreign_key_checks = 0');
 
         $this->mysqli->query('DROP TABLE IF EXISTS categories');
@@ -113,7 +111,5 @@ class DatabaseModel
         $this->mysqli->query($this->sqlCommand->suppliersCreate);
 
         $this->mysqli->query('SET foreign_key_checks = 1');
-
-        $this->mysqli->query('COMMIT');
     }
 }

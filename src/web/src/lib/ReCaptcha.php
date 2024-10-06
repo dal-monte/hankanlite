@@ -1,5 +1,5 @@
 <?php
-class reCaptcha
+class ReCaptcha
 {
     protected $reCaptchaKeys;
 

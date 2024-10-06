@@ -27,7 +27,7 @@ class purchaseContractController extends Controller
         $table = '';
 
         if (isset($_SESSION['now_user_id'])) {
-        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+            $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
         } else {
             throw new HttpNotFoundException();
         }
@@ -78,7 +78,7 @@ class purchaseContractController extends Controller
         $contract = null;
 
         if (isset($_SESSION['now_user_id'])) {
-        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+            $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
         } else {
             throw new HttpNotFoundException();
         }
@@ -102,12 +102,11 @@ class purchaseContractController extends Controller
             $supplier['supplier_id'] = strstr($_POST['supplier_name'], '@', true);
             $supplier['supplier_name'] = substr(strstr($_POST['supplier_name'], '@', false), 1);
             $errors['increase'] = $errors['increase'] + $this->validate->supplierValidate($supplier, $listSuppliers, 'select');
-
         } else {
             $errors['increase']['supplier_name'] = '選択肢から選んでください';
         }
 
-        if (isset($_POST['purchase_id']) && ($_POST['purchase_id'] ==! "")) {
+        if (isset($_POST['purchase_id']) && ($_POST['purchase_id'] == ! "")) {
             $contract = [
                 'contract_id' => trim($_POST['purchase_id']),
                 'supplier_id' => $supplier['supplier_id'],
@@ -220,7 +219,7 @@ class purchaseContractController extends Controller
         }
 
         if (isset($_SESSION['now_user_id'])) {
-        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+            $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
         } else {
             throw new HttpNotFoundException();
         }
@@ -338,7 +337,7 @@ class purchaseContractController extends Controller
 
         // POSTデータが「ID＠名前」となっているので＠マークの前後を分けて変数に入れてバリデーション
         if (strpos($_POST['supplier_name'], '@')) {
-            $contract['supplier_id'] = strstr($_POST['supplier_name'], '@', true);
+            $contract['supplier_id'] = (int)strstr($_POST['supplier_name'], '@', true);
             $contract['supplier_name'] = substr(strstr($_POST['supplier_name'], '@', false), 1);
             $errors['editing'] = $errors['editing'] + $this->validate->supplierValidate($contract, $listSuppliers, 'select');
             $errors['editing'] = $errors['editing'] + $this->validate->contractValidate($contract, $listPurchaseContracts, 'search');
@@ -391,7 +390,7 @@ class purchaseContractController extends Controller
         }
 
         if (isset($_POST['contract_id'])) {
-            $contract['contract_id'] = trim($_POST['contract_id']);
+            $contract['contract_id'] = (int)trim($_POST['contract_id']);
         } else {
             throw new HttpNotFoundException();
         }
@@ -467,7 +466,6 @@ class purchaseContractController extends Controller
             }
             $listPurchaseContracts = $checkedPurchaseContracts;
             $errors['editing'] = $errors['editing'] + $this->validate->contractValidate($contract, $listPurchaseContracts, 'select');
-
         } else {
             $errors['editing']['supplier_name'] = '選択肢から選んでください';
         }
