@@ -27,8 +27,8 @@ class Application
         $this->validate = new Validate();
         $this->convert = new Convert();
         $this->token = new Token();
-        $this->reCaptcha = new reCaptcha();
-        $this->sqlCommand = new sqlCommand();
+        $this->reCaptcha = new ReCaptcha();
+        $this->sqlCommand = new SqlCommand();
         $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
         $dotenv->load();
         $this->mainDatabase = $_ENV['DB_DATABASE'];
@@ -102,7 +102,7 @@ class Application
         return $this->token;
     }
 
-        public function getMainDatabase()
+    public function getMainDatabase()
     {
         return $this->mainDatabase;
     }
