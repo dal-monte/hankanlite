@@ -16,7 +16,7 @@ class UserController extends Controller
         }
 
         if (isset($_SESSION['now_user_id'])) {
-        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+            $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
         } else {
             throw new HttpNotFoundException();
         }
@@ -74,7 +74,7 @@ class UserController extends Controller
 
         if (isset($_POST['user_id']) && isset($_POST['user_name'])) {
             $user = [
-                'user_id' => trim($_POST['user_id']),
+                'user_id' => (int)trim($_POST['user_id']),
                 'user_name' => trim($_POST['user_name']),
             ];
         } else {
@@ -99,12 +99,13 @@ class UserController extends Controller
         $user['user_id_before'] = $user['user_id'];
 
         if (isset($_SESSION['now_user_id'])) {
-        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+            $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
         } else {
             throw new HttpNotFoundException();
         }
 
         $user['user_id'] = $companyId . $user['user_id_before'];
+        $user['user_id'] = (int)$user['user_id'];
         $checkCompanyUsers = $companyId . '%';
         $listUsers = $sqlUsers->fetchUser($checkCompanyUsers);
         $errors['increase'] = $errors['increase'] + $this->validate->userValidate($user, $listUsers, 'increase');
@@ -160,7 +161,7 @@ class UserController extends Controller
         }
 
         if (isset($_SESSION['now_user_id'])) {
-        $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
+            $companyId = mb_substr($_SESSION['now_user_id'], 0, 4);
         } else {
             throw new HttpNotFoundException();
         }
